@@ -1,0 +1,31 @@
+# Habilita el Motor de Reescritura
+RewriteEngine On
+
+# ----------------------------------------------------
+# 1. Seguridad (Bloquear acceso a app/, config/, etc)
+# Esto previene el acceso a archivos de configuración o lógica 
+# si el DocumentRoot no estuviera configurado correctamente [11].
+# ----------------------------------------------------
+
+# Bloquear el acceso a archivos de configuración .env, .ini, .yml, etc.
+RewriteRule ^(config|app|vendor|tests|storage)\/ - [F,L]
+
+# Bloquear el acceso a archivos .htaccess dentro de subdirectorios
+<Files .htaccess>
+    Order Allow,Deny
+    Deny from all
+</Files>
+
+# ----------------------------------------------------
+# 2. Enrutamiento al Controlador Frontal (index.php)
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^ index.php [L]
+# ----------------------------------------------------
+
+# Verifica que la ruta no sea un directorio existente
+RewriteCond %{REQUEST_FILENAME} !-d
+# Verifica que la ruta no sea un archivo existente (ej. .css, .js, imágenes)
+RewriteCond %{REQUEST_FILENAME} !-f
+# Si no es ni archivo ni directorio, redirige la solicitud al index.php
+RewriteRule ^ index.php [L]
