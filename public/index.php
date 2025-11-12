@@ -1,32 +1,28 @@
 <?php
-
 // ==========================================================
 // FORZAR MUESTRA DE ERRORES: QUITAR EN PRODUCCIÓN
 // ==========================================================
 ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
-
+ini_set('display_startup_errors', 1); 
+error_reporting(E_ALL); 
 /**
  * Controlador Frontal de ProfeWeb.
- * Punto de entrada único para todas las peticiones del framework MVC.
+ * Punto de entrada único para todas las peticiones del framework MVC [33].
  */
 
 // ----------------------------------------------------------
 // 1. INICIALIZACIÓN DEL ENTORNO Y CARGA DE CONFIGURACIÓN
 // ----------------------------------------------------------
 
-// 1.1. Definir el separador de directorio para portabilidad (DS)
-define('DS', DIRECTORY_SEPARATOR);
+// 1.1. Definir el separador de directorio para portabilidad (DS) [34]
+define('DS', DIRECTORY_SEPARATOR); 
+// 1.2. Definir la raíz del proyecto (un nivel arriba de public) [34]
+define('APP_ROOT', dirname(__DIR__)); 
 
-// 1.2. Definir la raíz del proyecto (un nivel arriba de public)
-// ESTA DEFINICIÓN DEBE ESTAR ANTES DE CUALQUIER REQUIRE QUE USE APP_ROOT
-define('APP_ROOT', dirname(__DIR__));
-
-// 1.3. Cargar el archivo de configuración (contiene ROOT_URL, DB_HOST, etc.)
+// 1.3. Cargar el archivo de configuración (contiene ROOT_URL, DB_HOST, etc.) [34]
 require_once APP_ROOT . DS . 'config' . DS . 'config.php'; 
 
-// 1.4. Iniciar la Sesión
+// 1.4. Iniciar la Sesión [35]
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
@@ -35,60 +31,57 @@ if (session_status() === PHP_SESSION_NONE) {
 // 2. CARGA DE CLASES DEL CORE Y COMPONENTES DE LA APLICACIÓN
 // ----------------------------------------------------------
 
-// Clases del Core
+// Clases del Core (Database debe usar el patrón Singleton [31, 32])
 require_once APP_ROOT . DS . 'app' . DS . 'Core' . DS . 'Database.php';
 require_once APP_ROOT . DS . 'app' . DS . 'Core' . DS . 'Router.php';
 
-// Nuevas Clases de Aplicación
+// Modelos y Controladores
 require_once APP_ROOT . DS . 'app' . DS . 'Models' . DS . 'Usuario.php';
-require_once APP_ROOT . DS . 'app' . DS . 'Controllers' . DS . 'LoginController.php';
+require_once APP_ROOT . DS . 'app' . DS . 'Controllers' . DS . 'HomeController.php';
+require_once APP_ROOT . DS . 'app' . DS . 'Controllers' . DS . 'LoginController.php'; 
+// 🚨 Nuevo Controlador de Registro
+require_once APP_ROOT . DS . 'app' . DS . 'Controllers' . DS . 'RegisterController.php';
 
-// 🚨 AÑADIR ESTA LÍNEA para que el Router pueda despachar la ruta raíz ('/')
-require_once APP_ROOT . DS . 'app' . DS . 'Controllers' . DS . 'HomeController.php'; 
-
-// ==========================================================
+// ----------------------------------------------------------
 // 3. Lógica de Despacho y Enrutamiento
-// ==========================================================
+// ----------------------------------------------------------
 
-// Obtener la URI
+// 🚨 Obtener la instancia de la base de datos (PDO) usando el patrón Singleton
+$database = \App\Core\Database::getInstance();
+// Necesitamos pasar la instancia de Database, no el PDO, para que los controladores puedan llamar a getConnection()
+// y trabajar con la abstracción.
+
+// Obtener la URI y normalizar la ruta [38, 39]
 $uri = $_SERVER['REQUEST_URI'];
 $uri_no_query = strtok($uri, '?'); 
-
-// 1. Obtener la ruta base y normalizarla (sin barra final)
 $base_path = parse_url(ROOT_URL, PHP_URL_PATH);
 $base_path_clean = rtrim($base_path, '/');
-
-// 2. Limpiar la URI: primero eliminar el path base de forma insensible a mayúsculas
-// Intentamos eliminar la base path completa (ej: /profeweb/)
 $path = str_ireplace($base_path, '', $uri_no_query);
 
-// 3. Si la eliminación falló (el path es el mismo), probamos eliminar la versión sin barra final.
 if ($path === $uri_no_query) {
     $path = str_ireplace($base_path_clean, '', $uri_no_query);
 }
 
-// 4. Limpiar restos de 'public/index.php' y 'public' (también insensible)
 $path = str_ireplace('index.php', '', $path);
 $path = str_ireplace('public', '', $path); 
-
-// 5. Normalizar: quitar barras iniciales/finales.
 $path = trim($path, '/'); 
 
-// 6. Normalizar a la raíz: si está vacío, debe ser '/'.
+// Normalizar a la raíz: si está vacío, debe ser '/' [39].
 if (empty($path)) {
     $path = '/'; 
 }
 
 // Instanciar Router y Registrar Rutas
 $router = new App\Core\Router();
-$router->add_route('/', 'HomeController@index'); 
 
-$router->add_route('/login', 'LoginController@showLogin'); 
+// Rutas GET (Mostrar Vistas)
+$router->add_route('GET', '', 'HomeController@index'); 
+$router->add_route('GET', '/login', 'LoginController@showLogin'); 
+$router->add_route('GET', '/registro', 'RegisterController@showRegister'); // Mostrar formulario de registro
 
-// 1. Ruta para MOSTRAR el formulario (Método GET)
-$router->add_route('GET', '/registro', 'LoginController@showRegister'); 
+// Rutas POST (Procesar Formularios/Lógica de Negocio)
+$router->add_route('POST', '/registro', 'RegisterController@storeRegister'); // Procesar envío de registro
 
-// 2. Ruta para PROCESAR la solicitud (Método POST, enviada por el formulario)
-$router->add_route('POST', '/registro', 'LoginController@storeRegister'); 
-$router->dispatch($path);
+// 🚨 Despachar pasando la RUTA, el MÉTODO HTTP y la INSTANCIA DATABASE
+$router->dispatch($path, $_SERVER['REQUEST_METHOD'], $database); 
 ?>

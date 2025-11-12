@@ -2,109 +2,41 @@
 
 namespace App\Controllers;
 
-// Asumimos que el modelo se incluye correctamente en el index.php o mediante un autoloading (futuro)
-use App\Models\Usuario; 
-
-// Nota: Asumimos que APP_ROOT y DS están definidos en public/index.php
+use App\Models\Usuario;
+use App\Core\Database;
 
 class LoginController {
 
     protected $usuarioModel;
-    protected $errors = [];
+    protected $db; // Inyectar la conexión a PDO
 
-    public function __construct() {
-        // Instanciar el modelo de datos para acceso a la BBDD [26]
-        $this->usuarioModel = new Usuario();
+    // El constructor recibe la instancia de Database Singleton
+    public function __construct(Database $db) {
+        $this->db = $db;
+        // Asumiendo que el Modelo Usuario acepta la instancia de Database [9, 11]
+        // Se carga el Modelo aquí para futuras operaciones de autenticación.
+        $this->usuarioModel = new Usuario($db); 
     }
 
     /**
-     * Muestra la vista del formulario de login. (Necesario para que el Router no falle)
+     * Maneja la solicitud GET /login
+     * Responsabilidad: Mostrar la vista del formulario de login.
      */
     public function showLogin(): void {
-        // Por ahora, solo simula que la vista de login se carga correctamente.
-        echo "<h1>Vista de Login Pendiente</h1>"; 
-    }
+        // La Vista (V) es la capa de presentación [12, 13].
+        // Usamos la variable $errors para compatibilidad con la vista [14].
+        $errors = [];
 
-    /**
-     * Muestra la vista del formulario de registro.
-     */
-    public function showRegister(): void {
-        // Lógica para cargar la vista [25, 27, 28]
+        // Asumiendo que la vista está en Views/auth/login.view.php
         $view_path = APP_ROOT . DS . 'app' . DS . 'Views' . DS . 'auth' . DS . 'login.view.php';
         
         if (!file_exists($view_path)) {
-            // Manejo de error si la ruta de la vista no es correcta
-            die("Error del sistema: Vista de registro no encontrada.");
+            die("Error del sistema: Vista de login no encontrada. Buscada en: " . $view_path);
         }
-        
-        // Si hay errores, se pasa a la vista (para mostrar mensajes en un entorno real)
-        $errors = $this->errors; 
         
         require_once $view_path;
     }
 
-    /**
-     * Procesa los datos del formulario POST para registrar un nuevo usuario.
-     */
-    public function storeRegister(): void {
-        
-        // Aseguramos que solo procesamos peticiones POST
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            header("Location: " . ROOT_URL . "/registro");
-            exit;
-        }
-
-        // 1. Limpieza y sanitización de inputs (Prevención de XSS) [7, 29]
-        // htmlspecialchars es esencial para filtrar la salida de datos [7, 8, 29]
-        $nombre = $_POST['nombre'] ?? '';
-        $email = $_POST['email'] ?? '';
-        $password = $_POST['password'] ?? '';
-        $password_confirm = $_POST['password_confirm'] ?? '';
-        
-        // Sanitizar el nombre y email antes de la validación
-        $nombre = htmlspecialchars(trim($nombre), ENT_QUOTES, 'UTF-8');
-        $email = htmlspecialchars(trim($email), ENT_QUOTES, 'UTF-8');
-        
-        // 2. Validación de la entrada (Controlador: formato y coherencia) [30]
-        
-        if (empty($nombre) || empty($email) || empty($password) || empty($password_confirm)) {
-            $this->errors[] = "Todos los campos son obligatorios.";
-        }
-        
-        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            $this->errors[] = "El formato del correo electrónico no es válido.";
-        }
-        
-        if ($password !== $password_confirm) {
-            $this->errors[] = "Las contraseñas no coinciden.";
-        }
-        
-        if (strlen($password) < 8) {
-            $this->errors[] = "La contraseña debe tener al menos 8 caracteres.";
-        }
-        
-        // 3. Validación de regla de negocio: Email único (persistencia) [16]
-        if (empty($this->errors) && $this->usuarioModel->findByEmail($email)) {
-            $this->errors[] = "El correo electrónico ya está registrado.";
-        }
-
-        // Si hay errores, volvemos a mostrar el formulario con los mensajes
-        if (!empty($this->errors)) {
-            $this->showRegister();
-            exit;
-        }
-
-        // 4. Si todo es válido, crear el usuario
-        if ($this->usuarioModel->create($nombre, $email, $password)) {
-            // 5. Redirigir a /login (Requisito) [26]
-            header("Location: " . ROOT_URL . "/login?registro=exitoso");
-            exit;
-        } else {
-            // Error en la inserción de BBDD
-            $this->errors[] = "Error al intentar guardar el usuario. Inténtelo más tarde.";
-            $this->showRegister();
-            exit;
-        }
-    }
+    // El método storeLogin() para procesar el POST de login se implementaría aquí más tarde.
 }
 ?>

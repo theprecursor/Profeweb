@@ -4,64 +4,70 @@ namespace App\Core;
 
 /**
  * Clase Router: Maneja la lógica de enrutamiento de la aplicación.
- * Mapea las URIs a los controladores y métodos correspondientes [10, 23].
+ * Mapea las URIs a los controladores y métodos correspondientes [7].
+ * Estructura: ['uri' => ['METHOD' => 'Controller@action']]
  */
 class Router {
-    /** @var array Lista de rutas registradas [24] */
+    /** @var array Lista de rutas registradas */
     protected $routes = [];
 
     /**
-     * Registra una nueva ruta simple (sin soporte para parámetros por ahora).
+     * Registra una nueva ruta, incluyendo el método HTTP.
+     * @param string $method El método HTTP (GET, POST, etc.)
      * @param string $uri La URI a la que responde la ruta (ej: '/', '/login')
-     * @param string $controller_action El handler en formato 'Controller@method'
+     * @param string $handler El handler en formato 'Controller@method'
      */
-    public function add_route(string $route, string $handler): void {
-        // 🚨 Normalizamos la ruta quitando barras iniciales/finales. 
-        // Esto convierte '/' en una cadena vacía ('').
+    public function add_route(string $method, string $route, string $handler): void {
+        // Normalizamos la ruta quitando barras iniciales/finales [8].
         $clean_route = trim($route, '/');
         
-        $this->routes[$clean_route] = $handler;
+        // Almacenamos el handler indexado por URI y Método HTTP
+        $this->routes[$clean_route][strtoupper($method)] = $handler;
     }
 
     /**
      * Procesa la URL recibida y llama al controlador/método correspondiente.
+     * Debe recibir el método HTTP de la solicitud y la instancia de Database para inyección.
      * @param string $url La ruta a despachar.
+     * @param string $method El método HTTP de la solicitud actual.
+     * @param \App\Core\Database $db_instance Instancia Singleton de la conexión DB.
      */
-    public function dispatch(string $url): void {
-    
-        // 1. Limpiamos la URL entrante (la variable $path que recibes de index.php)
-        // Esto convierte '/' a '' para que coincida con la clave registrada en add_route.
+    public function dispatch(string $url, string $method, \App\Core\Database $db_instance): void {
+   
         $search_url = trim($url, '/'); 
-        
-        // 2. Comprobar si la ruta existe
-        if (array_key_exists($search_url, $this->routes)) {
-            
-            $handler = $this->routes[$search_url];
-            list($controllerName, $action) = explode('@', $handler);
+        $current_method = strtoupper($method);
 
-            // La clase App\Controllers\HomeController debe estar visible (DEBUG OK)
-            $controllerClass = "App\\Controllers\\" . $controllerName; 
+        // 1. Comprobar si la URI existe Y si el método para esa URI está registrado
+        if (isset($this->routes[$search_url]) && array_key_exists($current_method, $this->routes[$search_url])) {
+            
+            $handler = $this->routes[$search_url][$current_method];
+            list($controllerName, $action) = explode('@', $handler);
+            $controllerClass = "App\\Controllers\\" . $controllerName;
             
             if (class_exists($controllerClass)) {
-                $controller = new $controllerClass();
-                $controller->$action();
-
-                // 🚨 QUITAR ESTA LÍNEA DE DEBUG TEMPORAL DESPUÉS DE LA PRUEBA EXITOSA
-                // echo "<h2>Ruta Despachada Exitosamente</h2>Controller: {$controllerName}<br>Method: {$action}<br>";
                 
+                // 🚨 Inyección de Dependencias: Pasamos la instancia de Database al constructor.
+                if ($controllerName === 'HomeController') {
+                    // HomeController no necesita la DB por ahora, pero lo mantenemos simple.
+                    $controller = new $controllerClass();
+                } else {
+                    // LoginController y RegisterController necesitan la DB para instanciar el Modelo Usuario [9-11].
+                    $controller = new $controllerClass($db_instance); 
+                }
+
+                if (method_exists($controller, $action)) {
+                    $controller->$action();
+                } else {
+                    $this->handle404();
+                }
             } else {
-                // Si el Router encuentra la ruta pero no puede instanciar la clase (improbable ahora)
                 $this->handle404();
             }
         } else {
-            // Ejecución del 404 si la clave limpia no se encontró
             $this->handle404();
         }
     }
 
-    /**
-     * Maneja el error 404 - Not Found.
-     */
     protected function handle404(): void {
         header("HTTP/1.0 404 Not Found");
         echo "<h1>404 Not Found</h1>";
