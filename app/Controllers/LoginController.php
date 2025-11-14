@@ -2,41 +2,86 @@
 
 namespace App\Controllers;
 
-use App\Models\Usuario;
+use App\Models\Usuario; // Necesita el Modelo de Usuario para buscar credenciales
 use App\Core\Database;
 
-class LoginController {
-
+class LoginController
+{
     protected $usuarioModel;
-    protected $db; // Inyectar la conexión a PDO
+    protected $errors = [];
 
-    // El constructor recibe la instancia de Database Singleton
-    public function __construct(Database $db) {
-        $this->db = $db;
-        // Asumiendo que el Modelo Usuario acepta la instancia de Database [9, 11]
-        // Se carga el Modelo aquí para futuras operaciones de autenticación.
+    public function __construct(Database $db)
+    {
+        // 🚨 CRÍTICO: El Router::dispatch() debe asegurar que la instancia Database (Singleton)
+        // se pase al constructor del controlador, resolviendo así la 'Fallo en la Instanciación de Dependencias'.
         $this->usuarioModel = new Usuario($db); 
     }
 
     /**
-     * Maneja la solicitud GET /login
-     * Responsabilidad: Mostrar la vista del formulario de login.
+     * Muestra la vista de inicio de sesión.
      */
-    public function showLogin(): void {
-        // La Vista (V) es la capa de presentación [12, 13].
-        // Usamos la variable $errors para compatibilidad con la vista [14].
-        $errors = [];
-
-        // Asumiendo que la vista está en Views/auth/login.view.php
-        $view_path = APP_ROOT . DS . 'app' . DS . 'Views' . DS . 'auth' . DS . 'login.view.php';
-        
-        if (!file_exists($view_path)) {
-            die("Error del sistema: Vista de login no encontrada. Buscada en: " . $view_path);
-        }
-        
+    public function showLogin(): void
+    {
+        // La vista (V) de Login (login.view.php) se carga aquí
+        $view_path = __DIR__ . '\..\Views\auth\login.view.php';
+        $errors = $this->errors;
+        // La vista de login debe tener el formulario definido como en el Formulario de Registro Docente.
         require_once $view_path;
     }
 
-    // El método storeLogin() para procesar el POST de login se implementaría aquí más tarde.
+    /**
+     * Procesa la solicitud POST del formulario de login.
+     */
+    public function authenticate(): void
+    {
+        
+        // 1. VERIFICACIÓN DEL MÉTODO (Solución al problema previo)
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            // Si no es POST, redirige (previene accesos directos o fallos de enrutamiento).
+            header("Location: " . ROOT_URL . "/public/login");
+            exit;
+        }
+        
+        // 2. RECOGIDA Y SANITIZACIÓN DE DATOS (Prevención de XSS) [4, 18]
+        $email = filter_input(INPUT_POST, 'email', FILTER_SANITIZE_EMAIL);
+        // Contraseña en texto plano
+        $password_plana = $_POST['password'] ?? '';
+        
+        // 3. VALIDACIÓN INICIAL DE PRESENCIA [19]
+        if (empty($email) || empty($password_plana)) {
+            $this->errors[] = "Todos los campos son obligatorios.";
+            $this->showLogin(); 
+            exit;
+        } 
+        // 4. BÚSQUEDA DEL USUARIO EN LA BBDD (Llamada al Modelo)
+        // El Modelo retorna el registro, incluyendo el hash de la contraseña cifrada.
+        $user = $this->usuarioModel->findByEmail($email); 
+
+        // 5. VERIFICACIÓN DE CREDENCIALES (MODO MD5 INSEGURO)
+        // La verificación compara el hash MD5 de la entrada del usuario con el hash MD5 almacenado
+        // **ADVERTENCIA: ESTO ES INSEGURO Y DEBE SER SUSTITUIDO POR password_verify()**
+
+        if (md5($password_plana) === $user['password']) {
+    
+            // 6. AUTENTICACIÓN EXITOSA: INICIO DE SESIÓN
+            if (session_status() === PHP_SESSION_NONE) {
+                session_start();
+            }
+            $_SESSION['logged_in'] = true;
+            $_SESSION['user_id'] = $user['id'];
+            $_SESSION['user_name'] = $user['nombre'];
+            
+            // 7. REDIRECCIÓN EXITOSA
+            // El controlador actúa como intermediario y orquestador del flujo [9-11]
+            header("Location: " . ROOT_URL . "/public/dashboard");
+            exit; 
+            
+        } else {
+            echo md5($password_plana), ' es igual a ', $user['password'];
+            // 8. FALLO DE AUTENTICACIÓN
+            $this->errors[] = "Usuario y/o contraseña incorrecto."; 
+            $this->showLogin();
+            exit;
+        }
+    }
 }
-?>

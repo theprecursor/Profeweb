@@ -17,10 +17,10 @@ class HomeController {
         echo "<p>El motor MVC ha despachado correctamente el HomeController.</p>";
         
         // Enlace al Registro, como ya estaba:
-        echo '<p>Dirígete a <a href="' . ROOT_URL . '/registro">/registro</a> para probar el formulario de registro seguro.</p>';
+        echo '<p>Dirígete a <a href="' . ROOT_URL . '/public/registro">/registro</a> para probar el formulario de registro seguro.</p>';
         
         // 🚨 ENLACE A LOGIN:
-        echo '<p>¿Ya tienes cuenta? <a href="' . ROOT_URL . '/login">Inicia Sesión</a>.</p>'; 
+        echo '<p>¿Ya tienes cuenta? <a href="' . ROOT_URL . '/public/login">Inicia Sesión</a>.</p>'; 
     }
 }
 ?>

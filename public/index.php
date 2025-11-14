@@ -39,6 +39,7 @@ require_once APP_ROOT . DS . 'app' . DS . 'Core' . DS . 'Router.php';
 require_once APP_ROOT . DS . 'app' . DS . 'Models' . DS . 'Usuario.php';
 require_once APP_ROOT . DS . 'app' . DS . 'Controllers' . DS . 'HomeController.php';
 require_once APP_ROOT . DS . 'app' . DS . 'Controllers' . DS . 'LoginController.php'; 
+require_once APP_ROOT . DS . 'app' . DS . 'Controllers' . DS . 'LoginController.php'; 
 // 🚨 Nuevo Controlador de Registro
 require_once APP_ROOT . DS . 'app' . DS . 'Controllers' . DS . 'RegisterController.php';
 
@@ -76,9 +77,24 @@ $router = new App\Core\Router();
 
 // Rutas GET (Mostrar Vistas)
 $router->add_route('GET', '', 'HomeController@index'); 
-$router->add_route('GET', '/login', 'LoginController@showLogin'); 
-$router->add_route('GET', '/registro', 'RegisterController@showRegister'); // Mostrar formulario de registro
 
+// Ruta para MOSTRAR el formulario (Método GET)
+$router->add_route('GET', '/login', 'LoginController@showLogin');
+
+// 🚨 CRÍTICO: Ruta para PROCESAR la solicitud (Método POST)
+$router->add_route('POST', '/login', 'LoginController@authenticate');
+
+// Mostrar formulario de registro
+$router->add_route('GET', '/registro', 'RegisterController@showRegister'); 
+
+// Ruta del Panel Privado (Dashboard)
+$router->add_route('GET', '/dashboard', 'DashboardController@index');
+
+// En index.php, asumiendo que el Router soporta inyección de la dependencia $db
+$router->add_route('GET', '/api/asignaturas', 'AsignaturaController@dashboard');
+// Uso de parámetros dinámicos en la URL (ej: /api/asignaturas/15)
+$router->add_route('PUT', '/api/asignaturas/{id}', 'AsignaturaController@update');
+$router->add_route('DELETE', '/api/asignaturas/{id}', 'AsignaturaController@destroy');
 // Rutas POST (Procesar Formularios/Lógica de Negocio)
 $router->add_route('POST', '/registro', 'RegisterController@storeRegister'); // Procesar envío de registro
 

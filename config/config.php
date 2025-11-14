@@ -1,19 +1,22 @@
 <?php
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1); 
+error_reporting(E_ALL);
 /**
  * Archivo de Configuración Global de ProfeWeb
  * Define constantes para la conexión a la BBDD y la URL raíz.
  */
 
 // ==========================================================
-// CONFIGURACIÓN DE BASE DE DATOS (MySQL/MariaDB) [5, 6]
-// Se recomienda utf8mb4 para el soporte completo de caracteres [7, 8]
+// CONFIGURACIÓN DE BASE DE DATOS (MySQL/MariaDB)
+// Se recomienda utf8mb4 para el soporte completo de caracteres
 // ==========================================================
 
-// DB_HOST: Host de la base de datos. Usualmente 'localhost' o '127.0.0.1' en desarrollo [7].
+// DB_HOST: Host de la base de datos. Usualmente 'localhost' o '127.0.0.1' en desarrollo.
 define('DB_HOST', 'localhost');
 
 // DB_NAME: Nombre de la base de datos.
-define('DB_NAME', 'profeweb'); // Nombre según el esquema [9]
+define('DB_NAME', 'profeweb'); // Nombre según el esquema
 
 // DB_USER: Usuario de la base de datos.
 define('DB_USER', 'root');

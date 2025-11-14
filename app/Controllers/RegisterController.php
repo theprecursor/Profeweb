@@ -15,10 +15,10 @@ class RegisterController
      */
     public function __construct(Database $db)
     {
-        $this->db = $db;
-        // Crear la instancia del Modelo de Usuario, pasándole la conexión DB [9, 10].
-        $this->usuarioModel = new \App\Models\Usuario($db); 
+        // El constructor ahora puede instanciar correctamente
+        $this->usuarioModel = new Usuario($db); // Crear la instancia del Modelo de Usuario [6]
     }
+
 
     /**
      * Maneja la solicitud GET /registro
@@ -29,7 +29,7 @@ class RegisterController
         // Se inicializan errores (útil si volvemos desde storeRegister)
         $errors = []; 
         // Lógica para cargar la vista [10]. Asumimos views/registro.view.php
-        require_once APP_ROOT . DS . 'app' . DS . 'Views' . DS . 'registro.view.php'; 
+        require_once APP_ROOT . DS . 'app' . DS . 'Views' . DS . 'auth' . DS . 'registro.view.php'; 
     }
 
     /**

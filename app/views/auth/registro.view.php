@@ -1,81 +1,90 @@
+<?php 
+namespace App\Controllers;
+?>
+
 <!-- app/Views/auth/registro.view.php -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Registro Docente - ProfeWeb</title>
-    <!-- Incluir Bootstrap 5 para el diseño responsive [3, 31] -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Inclusión de Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" 
+          rel="stylesheet" 
+          crossorigin="anonymous">
+    
     <style>
+        /* Mismos estilos CSS que el login para coherencia visual */
+        :root {
+            --profe-blue: var(--bs-primary);
+            --profe-green: var(--bs-success);
+        }
+        body {
+            background-color: #f0f2f5; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
         .register-container {
-            max-width: 450px;
-            margin-top: 50px;
+            margin-top: 5vh; 
+            margin-bottom: 5vh;
+        }
+        .card-accent-green {
+            border-left: 5px solid var(--profe-green); 
+            border-radius: 0.75rem;
         }
     </style>
 </head>
 <body>
+    <main class="container register-container">
+        <div class="row justify-content-center">
+            <div class="col-md-7 col-lg-6">
+                <!-- Tarjeta llamativa y profesional, idéntica a la de Login -->
+                <div class="card shadow-lg card-accent-green border-0">
+                    <div class="card-header text-center bg-primary text-white border-0" style="border-radius: 0.70rem 0.70rem 0 0;">
+                        <!-- AZUL: Consistencia en el encabezado -->
+                        <h1 class="h4 py-2 mb-0">Registro en ProfeWeb</h1>
+                    </div>
+                    <div class="card-body p-4">
+                        <form action="/registro" method="POST" novalidate>
+                            
+                            <div class="mb-3">
+                                <label for="nombre" class="form-label small text-muted">Nombre Completo</label>
+                                <input type="text" class="form-control" id="nombre" name="nombre" required placeholder="Tu nombre profesional">
+                            </div>
 
-<div class="container">
-    <div class="row justify-content-center">
-        <div class="col-md-10 register-container">
-            <h2 class="text-center mb-4">Registro Docente ProfeWeb</h2>
-            <div class="card p-4">
+                            <div class="mb-3">
+                                <label for="email" class="form-label small text-muted">Correo Electrónico</label>
+                                <input type="email" class="form-control" id="email" name="email" required placeholder="ejemplo@docente.com">
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="password" class="form-label small text-muted">Contraseña (Mínimo 8 caracteres)</label>
+                                <input type="password" class="form-control" id="password" name="password" required minlength="8" placeholder="Crea una contraseña segura">
+                            </div>
 
-                <?php 
-                // Mostrar errores si existen (pasados desde el Controlador)
-                if (!empty($errors)): 
-                ?>
-                <div class="alert alert-danger" role="alert">
-                    <ul class="mb-0">
-                        <?php foreach ($errors as $error): ?>
-                            <!-- Aseguramos la seguridad de salida (XSS) [11, 29] -->
-                            <li><?= htmlspecialchars($error, ENT_QUOTES, 'UTF-8') ?></li>
-                        <?php endforeach; ?>
-                    </ul>
+                            <div class="mb-4">
+                                <label for="password_confirm" class="form-label small text-muted">Confirmar Contraseña</label>
+                                <input type="password" class="form-control" id="password_confirm" name="password_confirm" required minlength="8" placeholder="Repite la contraseña">
+                            </div>
+
+                            <div class="d-grid gap-2">
+                                <!-- Botón principal AZUL -->
+                                <button type="submit" class="btn btn-primary btn-lg fw-bold">Crear Cuenta</button>
+                            </div>
+                        </form>
+
+                        <!-- Enlace de acento VERDE -->
+                        <p class="mt-4 text-center small">
+                            ¿Ya estás registrado? <a href="<?php echo ROOT_URL ?>/public/login" class="text-success fw-bold">Ir a Iniciar Sesión</a>
+                        </p>
+                    </div>
                 </div>
-                <?php endif; ?>
-
-                <!-- Formulario: method="POST" y acción que apunta al Controlador Frontal /registro -->
-                <form action="<?= ROOT_URL ?>/registro" method="POST">
-                    
-                    <div class="mb-3">
-                        <label for="nombre" class="form-label">Nombre</label>
-                        <input type="text" class="form-control" id="nombre" name="nombre" 
-                               value="<?= isset($nombre) ? htmlspecialchars($nombre, ENT_QUOTES, 'UTF-8') : '' ?>" 
-                               required placeholder="Tu nombre completo">
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="email" class="form-label">Email</label>
-                        <input type="email" class="form-control" id="email" name="email" 
-                               value="<?= isset($email) ? htmlspecialchars($email, ENT_QUOTES, 'UTF-8') : '' ?>" 
-                               required placeholder="ejemplo@docente.com">
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="password" class="form-label">Contraseña</label>
-                        <!-- Usamos minlength para validación de cliente (UX) [33, 34] -->
-                        <input type="password" class="form-control" id="password" name="password" required 
-                               minlength="8" placeholder="Mínimo 8 caracteres">
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="password_confirm" class="form-label">Confirmar Contraseña</label>
-                        <input type="password" class="form-control" id="password_confirm" name="password_confirm" required 
-                               minlength="8" placeholder="Repite la contraseña">
-                    </div>
-                    
-                    <button type="submit" class="btn btn-primary w-100">Registrarse</button>
-                </form>
             </div>
-            <p class="text-center mt-3">
-                ¿Ya tienes cuenta? <a href="<?= ROOT_URL ?>/login">Iniciar Sesión</a>
-            </p>
         </div>
-    </div>
-</div>
+    </main>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" 
+            crossorigin="anonymous"></script>
 </body>
 </html>
