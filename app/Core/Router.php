@@ -1,77 +1,80 @@
 <?php
+// app/Core/Router.php
 
 namespace App\Core;
 
-/**
- * Clase Router: Maneja la lógica de enrutamiento de la aplicación.
- * Mapea las URIs a los controladores y métodos correspondientes [7].
- * Estructura: ['uri' => ['METHOD' => 'Controller@action']]
- */
-class Router {
-    /** @var array Lista de rutas registradas */
-    protected $routes = [];
+use App\Core\Database;
 
-    /**
-     * Registra una nueva ruta, incluyendo el método HTTP.
-     * @param string $method El método HTTP (GET, POST, etc.)
-     * @param string $uri La URI a la que responde la ruta (ej: '/', '/login')
-     * @param string $handler El handler en formato 'Controller@method'
-     */
-    public function add_route(string $method, string $route, string $handler): void {
-        // Normalizamos la ruta quitando barras iniciales/finales [8].
-        $clean_route = trim($route, '/');
-        
-        // Almacenamos el handler indexado por URI y Método HTTP
-        $this->routes[$clean_route][strtoupper($method)] = $handler;
+class Router
+{
+    protected $routes = []; // [method][pattern] => handler_string
+
+    public function add_route(string $method, string $route, string $handler): void
+    {
+        $method = strtoupper($method);
+        $route  = trim($route, '/');
+
+        // Guardamos siempre el handler como string
+        $this->routes[$method][$route] = $handler;
     }
 
-    /**
-     * Procesa la URL recibida y llama al controlador/método correspondiente.
-     * Debe recibir el método HTTP de la solicitud y la instancia de Database para inyección.
-     * @param string $url La ruta a despachar.
-     * @param string $method El método HTTP de la solicitud actual.
-     * @param \App\Core\Database $db_instance Instancia Singleton de la conexión DB.
-     */
-    public function dispatch(string $url, string $method, Database $db_instance): void {
-   
-        $search_url = trim($url, '/'); 
-        $current_method = strtoupper($method);
+    public function dispatch(string $uri, string $httpMethod, Database $db_instance): void
+    {
+        $uri        = trim(parse_url($uri, PHP_URL_PATH), '/');
+        $httpMethod = strtoupper($httpMethod);
 
-        // 1. Comprobar si la URI existe Y si el método para esa URI está registrado
-        if (isset($this->routes[$search_url]) && array_key_exists($current_method, $this->routes[$search_url])) {
-            
-            $handler = $this->routes[$search_url][$current_method];
-            list($controllerName, $action) = explode('@', $handler);
-            $controllerClass = "App\\Controllers\\" . $controllerName;
-            
-            if (class_exists($controllerClass)) {
-                
-                // 🚨 Inyección de Dependencias: Pasamos la instancia de Database al constructor.
-                if ($controllerName === 'HomeController') {
-                    // HomeController no necesita la DB por ahora, pero lo mantenemos simple.
-                    $controller = new $controllerClass();
-                } else {
-                    // LoginController y RegisterController necesitan la DB para instanciar el Modelo Usuario [9-11].
-                    $controller = new $controllerClass($db_instance); 
-                }
-
-                if (method_exists($controller, $action)) {
-                    $controller->$action();
-                } else {
-                    $this->handle404();
-                }
-            } else {
-                $this->handle404();
-            }
-        } else {
-            $this->handle404();
+        // 1. Ruta exacta
+        if (isset($this->routes[$httpMethod][$uri])) {
+            $this->execute($this->routes[$httpMethod][$uri], []);
+            return;
         }
+
+        // 2. Rutas con parámetros {id}, {slug}, etc.
+        foreach ($this->routes[$httpMethod] ?? [] as $pattern => $handler) {
+            // Convertir {id} → regex
+            $regex = preg_replace('#\{[^}]+\}#', '([^/]+)', $pattern);
+            $regex = "#^$regex$#";
+
+            if (preg_match($regex, $uri, $matches)) {
+                array_shift($matches); // quitar el match completo
+                $this->execute($handler, $matches);
+                return;
+            }
+        }
+
+        // 3. 404
+        $this->handle404();
     }
 
-    protected function handle404(): void {
-        header("HTTP/1.0 404 Not Found");
-        echo "<h1>404 Not Found</h1>";
-        echo "<p>La ruta solicitada no se ha podido dirigir.</p>";
+    private function execute(string $handler, array $params = []): void
+    {
+        // Ahora $handler siempre es string → explode() funciona seguro
+        [$controllerName, $method] = explode('@', $handler);
+
+        $controllerClass = "App\\Controllers\\" . $controllerName;
+
+        if (!class_exists($controllerClass)) {
+            $this->handle404();
+            return;
+        }
+
+        $controller = new $controllerClass();
+
+        if (!method_exists($controller, $method)) {
+            $this->handle404();
+            return;
+        }
+
+        call_user_func_array([$controller, $method], $params);
+    }
+
+    protected function handle404(): void
+    {
+        http_response_code(404);
+        echo "<div style='text-align:center;padding:50px;font-family:Arial'>
+                <h1>404 - Página no encontrada</h1>
+                <p>La ruta solicitada no existe.</p>
+              </div>";
+        exit;
     }
 }
-?>

@@ -6,7 +6,7 @@
     <title>ProfeWeb - Tu plataforma educativa</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
-    <link href="/public/css/style.css" rel="stylesheet"> <!-- opcional: tus estilos -->
+    <link href="/public/css/style.css" rel="stylesheet">
 </head>
 <body>
 
@@ -26,26 +26,36 @@
                     </li>
                 </ul>
 
+                <!-- MENÚ DE USUARIO / LOGIN / REGISTRO -->
                 <ul class="navbar-nav">
                     <?php if (isset($_SESSION['user_id'])): ?>
                         <!-- Profesor logueado -->
                         <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                                <i class="fas fa-user"></i> <?= htmlspecialchars($_SESSION['user_name']) ?>
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-user-circle"></i> 
+                                <?= htmlspecialchars($_SESSION['user_name'] ?? 'Profesor') ?>
                             </a>
-                            <ul class="dropdown-menu">
-                                <li><a class="dropdown-item" href="/dashboard.php"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li>
+                                    <a class="dropdown-item" href="/dashboard">
+                                        <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                                    </a>
+                                </li>
                                 <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" href="/logout.php"><i class="fas fa-sign-out-alt"></i> Cerrar sesión</a></li>
+                                <li>
+                                    <a class="dropdown-item text-danger" href="/logout">
+                                        <i class="fas fa-sign-out-alt me-2"></i>Cerrar sesión
+                                    </a>
+                                </li>
                             </ul>
                         </li>
                     <?php else: ?>
-                        <!-- No logueado -->
+                        <!-- Visitante -->
                         <li class="nav-item">
-                            <a class="nav-link" href="/login.php">Iniciar sesión</a>
+                            <a class="nav-link" href="/login">Iniciar sesión</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link btn btn-outline-light ms-2 px-3" href="/register.php">Registrarse</a>
+                            <a class="nav-link btn btn-outline-light ms-2 px-4" href="/register">Registrarse</a>
                         </li>
                     <?php endif; ?>
                 </ul>

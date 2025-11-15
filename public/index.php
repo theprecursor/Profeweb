@@ -38,8 +38,19 @@ $router->add_route('GET', '/register', 'AuthController@showRegister');
 $router->add_route('POST', '/register', 'AuthController@register');
 $router->add_route('GET', '/logout', 'AuthController@logout');
 
-// Ejemplo futuro
-// $router->add_route('GET', '/dashboard', 'DashboardController@index');
+// === PÁGINA PÚBLICA ===
+$router->add_route('GET', '/profesor/{id}', 'ProfesorController@show');
+
+// === DASHBOARD (privado) ===
+$router->add_route('GET', '/dashboard', 'DashboardController@index');
+
+// === ASIGNATURAS (solo profesor logueado) ===
+$router->add_route('GET',  '/asignaturas',          'AsignaturaController@index');
+$router->add_route('GET',  '/asignatura/crear',     'AsignaturaController@create');
+$router->add_route('POST', '/asignatura/crear',     'AsignaturaController@store');
+$router->add_route('GET',  '/asignatura/editar/{id}', 'AsignaturaController@edit');
+$router->add_route('POST', '/asignatura/editar/{id}', 'AsignaturaController@update');
+$router->add_route('POST', '/asignatura/eliminar/{id}', 'AsignaturaController@delete');
 
 // ==============================================================
 
