@@ -1,26 +1,26 @@
 <?php
-
 namespace App\Controllers;
 
-/**
- * Clase HomeController: Responsable de la lógica de la página principal y otras rutas públicas.
- */
-class HomeController {
+use App\Core\Controller; // ← lo creamos en un segundo si no lo tienes
 
-    /**
-     * Método por defecto para la ruta raíz (/).
-     */
-    public function index(): void {
-        // Esta es la simulación de la página principal.
-        // La Vista (V) es la capa de presentación que usa HTML/CSS/JS [4-6].
-        echo "<h1>Bienvenido a ProfeWeb (Página de inicio)</h1>";
-        echo "<p>El motor MVC ha despachado correctamente el HomeController.</p>";
-        
-        // Enlace al Registro, como ya estaba:
-        echo '<p>Dirígete a <a href="' . ROOT_URL . '/registro">/registro</a> para probar el formulario de registro seguro.</p>';
-        
-        // 🚨 ENLACE A LOGIN:
-        echo '<p>¿Ya tienes cuenta? <a href="' . ROOT_URL . '/login">Inicia Sesión</a>.</p>'; 
+class HomeController extends Controller
+{
+    public function index()
+    {
+        // Obtener profesores con número de asignaturas
+        $stmt = $this->db->query("
+            SELECT u.id, u.nombre, u.email, COUNT(a.id) AS total_asignaturas
+            FROM usuarios u
+            LEFT JOIN asignaturas a ON a.usuario_id = u.id
+            GROUP BY u.id
+            ORDER BY u.nombre
+        ");
+        $profesores = $stmt->fetchAll();
+
+        // Cargar la vista dentro del layout
+        $this->view('home/index', [
+            'profesores' => $profesores,
+            'current_page' => 'home'
+        ]);
     }
 }
-?>

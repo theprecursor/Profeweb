@@ -32,7 +32,7 @@ class Router {
      * @param string $method El método HTTP de la solicitud actual.
      * @param \App\Core\Database $db_instance Instancia Singleton de la conexión DB.
      */
-    public function dispatch(string $url, string $method, \App\Core\Database $db_instance): void {
+    public function dispatch(string $url, string $method, Database $db_instance): void {
    
         $search_url = trim($url, '/'); 
         $current_method = strtoupper($method);
