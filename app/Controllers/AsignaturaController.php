@@ -93,6 +93,7 @@ class AsignaturaController extends Controller
     // ACTUALIZAR
     public function update($id)
     {
+        printf('llegando aquí');
         $this->requireAuth();
         $id = (int)$id;
 
@@ -109,7 +110,7 @@ class AsignaturaController extends Controller
 
         if (empty($nombre)) {
             $_SESSION['error'] = "El nombre es obligatorio.";
-            $this->redirect("/asignatura/{$id}/editar");
+            $this->redirect("/asignatura/editar/{$id}");
         }
 
         $stmt = $this->db->prepare("

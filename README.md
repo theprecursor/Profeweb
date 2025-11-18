@@ -52,22 +52,22 @@ Profeweb/
 
 ### Rutas Disponibles
 
-| Método | URL                          | Controlador@Método                     | Descripción                                           | ¿Requiere login? |
-|--------|------------------------------|----------------------------------------|-------------------------------------------------------|------------------|
-| GET    | `/`                          | `HomeController@index`                | Página principal (listado de profesores)              | No               |
-| GET    | `/login`                     | `AuthController@showLogin`             | Formulario de login                                   | No               |
-| POST   | `/login`                     | `AuthController@login`                 | Procesar login                                        | No               |
-| GET    | `/register`                  | `AuthController@showRegister`          | Formulario de registro                                | No               |
-| POST   | `/register`                  | `AuthController@register`              | Procesar registro                                     | No               |
-| GET    | `/logout`                    | `AuthController@logout`                | Cerrar sesión                                         | Sí               |
-| GET    | `/dashboard`                 | `DashboardController@index`            | Panel privado del profesor                            | Sí               |
-| GET    | `/asignaturas`               | `AsignaturaController@index`           | Listado de mis asignaturas                            | Sí               |
-| GET    | `/asignatura/crear`          | `AsignaturaController@create`          | Formulario crear asignatura                           | Sí               |
-| POST   | `/asignatura/crear`          | `AsignaturaController@store`           | Guardar nueva asignatura                              | Sí               |
-| GET    | `/asignatura/{id}/editar`    | `AsignaturaController@edit`            | Formulario editar asignatura                          | Sí               |
-| POST   | `/asignatura/{id}/editar`    | `AsignaturaController@update`          | Actualizar asignatura                                 | Sí               |
-| POST   | `/asignatura/{id}/eliminar`  | `AsignaturaController@delete`          | Eliminar asignatura                                   | Sí               |
-| GET    | `/profesor/{id}`             | `ProfesorController@show`              | Perfil público del profesor (solo asignaturas públicas) | No             |
+| Método | URL                          | Controlador@Método                     | Descripción                                             | ¿Requiere login? |
+|--------|------------------------------|----------------------------------------|---------------------------------------------------------|------------------|
+| GET    | `/`                          | `HomeController@index`                 | Página principal (listado de profesores)                | No               |
+| GET    | `/login`                     | `AuthController@showLogin`             | Formulario de login                                     | No               |
+| POST   | `/login`                     | `AuthController@login`                 | Procesar login                                          | No               |
+| GET    | `/register`                  | `AuthController@showRegister`          | Formulario de registro                                  | No               |
+| POST   | `/register`                  | `AuthController@register`              | Procesar registro                                       | No               |
+| GET    | `/logout`                    | `AuthController@logout`                | Cerrar sesión                                           | Sí               |
+| GET    | `/dashboard`                 | `DashboardController@index`            | Panel privado del profesor                              | Sí               |
+| GET    | `/asignaturas`               | `AsignaturaController@index`           | Listado de mis asignaturas                              | Sí               |
+| GET    | `/asignatura/crear`          | `AsignaturaController@create`          | Formulario crear asignatura                             | Sí               |
+| POST   | `/asignatura/crear`          | `AsignaturaController@store`           | Guardar nueva asignatura                                | Sí               |
+| GET    | `/asignatura/{id}/editar`    | `AsignaturaController@edit`            | Formulario editar asignatura                            | Sí               |
+| POST   | `/asignatura/{id}/editar`    | `AsignaturaController@update`          | Actualizar asignatura                                   | Sí               |
+| POST   | `/asignatura/{id}/eliminar`  | `AsignaturaController@delete`          | Eliminar asignatura                                     | Sí               |
+| GET    | `/profesor/{id}`             | `ProfesorController@show`              | Perfil público del profesor (solo asignaturas públicas) | No               |
 
 ---
 

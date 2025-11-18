@@ -6,7 +6,20 @@
     <title>ProfeWeb - Tu plataforma educativa</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
-    <link href="/public/css/style.css" rel="stylesheet">
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0; /* Elimina cualquier margen global que añada scroll */
+        }
+
+        body {
+            display: flex;
+            flex-direction: column; /* Apila el header, main y footer */
+        }
+        main {
+            flex: 1; /* Esto es un shorthand para flex-grow: 1, que hace que el elemento se expanda */
+        }
+    </style>
 </head>
 <body>
 

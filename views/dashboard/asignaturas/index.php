@@ -36,10 +36,10 @@
                         <?php endif; ?>
 
                         <div class="mt-3">
-                            <a href="/asignatura/<?= $a['id'] ?>/editar" class="btn btn-outline-primary btn-sm">
+                            <a href="/asignatura/editar/<?= $a['id'] ?>" class="btn btn-outline-primary btn-sm">
                                 Editar
                             </a>
-                            <form method="POST" action="/asignatura/<?= $a['id'] ?>/eliminar" class="d-inline">
+                            <form method="POST" action="/asignatura/eliminar/<?= $a['id'] ?>" class="d-inline">
                                 <button type="submit" class="btn btn-outline-danger btn-sm"
                                         onclick="return confirm('¿Eliminar esta asignatura y todo su contenido?')">
                                     Eliminar
