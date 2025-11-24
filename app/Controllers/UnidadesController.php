@@ -88,6 +88,7 @@ class UnidadesController extends Controller
         $es_publico = isset($_POST['es_publico']) ? 1 : 0;
         $curso_id = trim($_POST['curso'] ?? '');
         $asignatura_id = trim($_POST['asignatura'] ?? '');
+        $orden = trim($_POST['orden'] ?? '');
 
         if (empty($nombre)) {
             $_SESSION['error'] = "El nombre de la asignatura es obligatorio.";
@@ -96,12 +97,12 @@ class UnidadesController extends Controller
 
         $stmt = $this->db->prepare("
             INSERT INTO unidades_didacticas 
-                (usuario_id, nombre_unidad, descripcion, es_publico, curso_id, asignatura_id) 
-            VALUES (?, ?, ?, ?, ?, ?)
+                (usuario_id, nombre_unidad, descripcion, es_publico, curso_id, asignatura_id, orden) 
+            VALUES (?, ?, ?, ?, ?, ?, ?)
         ");
-        $stmt->execute([$_SESSION['user_id'], $nombre, $descripcion, $es_publico, $curso_id, $asignatura_id]);
+        $stmt->execute([$_SESSION['user_id'], $nombre, $descripcion, $es_publico, $curso_id, $asignatura_id, $orden]);
 
-        $_SESSION['success'] = "Asignatura creada correctamente.";
+        $_SESSION['success'] = "Unidad creada correctamente.";
         $this->redirect('/unidades');
     }
 
@@ -118,6 +119,23 @@ class UnidadesController extends Controller
         $stmt->execute([$id, $_SESSION['user_id']]);
         $unidades = $stmt->fetch();
 
+        $stmt = $this->db->prepare("
+            SELECT id, nombre_asignatura, curso_id 
+            FROM asignaturas 
+            WHERE usuario_id = ?
+            ORDER BY curso_id DESC
+        ");
+        $stmt->execute([$_SESSION['user_id']]);
+        $asignaturas = $stmt->fetchAll();
+        $stmt = $this->db->prepare("
+            SELECT id, nombre_curso 
+            FROM cursos 
+            WHERE usuario_id = ?
+            ORDER BY nombre_curso DESC
+        ");
+        $stmt->execute([$_SESSION['user_id']]);
+        $cursos = $stmt->fetchAll();
+
         if (!$unidades) {
             $_SESSION['error'] = "Unidad no encontrada.";
             $this->redirect('unidades');
@@ -125,6 +143,8 @@ class UnidadesController extends Controller
 
         $this->dashboardView('/unidades/edit', [
             'unidades' => $unidades,
+            'cursos' => $cursos,
+            'asignaturas' => $asignaturas,
             'current_page' => 'unidades'
         ]);
     }
@@ -136,16 +156,19 @@ class UnidadesController extends Controller
         $this->requireAuth();
         $id = (int)$id;
 
-        $stmt = $this->db->prepare("SELECT id FROM asignaturas WHERE id = ? AND usuario_id = ?");
+        $stmt = $this->db->prepare("SELECT id FROM unidades_didacticas WHERE id = ? AND usuario_id = ?");
         $stmt->execute([$id, $_SESSION['user_id']]);
         if (!$stmt->fetch()) {
             $_SESSION['error'] = "No tienes permiso para editar esta asignatura.";
             $this->redirect('unidades');
         }
 
-        $nombre = trim($_POST['nombre_asignatura'] ?? '');
+        $nombre = trim($_POST['nombre_unidad'] ?? '');
         $descripcion = trim($_POST['descripcion'] ?? '');
         $es_publico = isset($_POST['es_publico']) ? 1 : 0;
+        $curso_id = trim($_POST['curso'] ?? '');
+        $asignatura_id = trim($_POST['asignatura'] ?? '');
+        $orden = trim($_POST['orden'] ?? '');
 
         if (empty($nombre)) {
             $_SESSION['error'] = "El nombre es obligatorio.";
@@ -153,13 +176,16 @@ class UnidadesController extends Controller
         }
 
         $stmt = $this->db->prepare("
-            UPDATE asignaturas 
-            SET nombre_asignatura = ?, 
+            UPDATE unidades_didacticas 
+            SET nombre_unidad = ?, 
                 descripcion = ?, 
-                es_publico = ? 
+                es_publico = ?, 
+                curso_id = ?,
+                orden = ?,
+                asignatura_id = ?
             WHERE id = ?
         ");
-        $stmt->execute([$nombre, $descripcion, $es_publico, $id]);
+        $stmt->execute([$nombre, $descripcion, $es_publico, $curso_id, $orden, $asignatura_id, $id]);
 
         $_SESSION['success'] = "Unidad actualizada.";
         $this->redirect('/unidades');
