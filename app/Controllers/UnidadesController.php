@@ -1,11 +1,11 @@
 <?php
-// app/Controllers/AsignaturaController.php
+// app/Controllers/UnidadesController.php
 
 namespace App\Controllers;
 
 use App\Core\Controller;
 
-class AsignaturaController extends Controller
+class UnidadesController extends Controller
 {
     private function requireAuth(): void
     {
@@ -20,35 +20,62 @@ class AsignaturaController extends Controller
         $this->requireAuth();
 
         $stmt = $this->db->prepare("
-            SELECT id, nombre_asignatura, descripcion, es_publico
+            SELECT *
+            FROM unidades_didacticas  
+            WHERE usuario_id = ?
+            ORDER BY orden DESC
+        ");
+        $stmt->execute([$_SESSION['user_id']]);
+        $unidades = $stmt->fetchAll();
+
+        $stmt = $this->db->prepare("
+            SELECT id, nombre_asignatura, curso_id 
             FROM asignaturas 
-            WHERE usuario_id = ? 
-            ORDER BY nombre_asignatura DESC
+            WHERE usuario_id = ?
+            ORDER BY curso_id DESC
         ");
         $stmt->execute([$_SESSION['user_id']]);
         $asignaturas = $stmt->fetchAll();
 
-        $this->dashboardView('asignaturas/index', [
+        $stmt = $this->db->prepare("
+            SELECT nombre_curso, id 
+            FROM cursos 
+            WHERE usuario_id = ?
+            ORDER BY nombre_curso ASC
+        ");
+        $stmt->execute([$_SESSION['user_id']]);
+        $cursos = $stmt->fetchAll();
+        $this->dashboardView('unidades/index', [
+            'cursos' => $cursos,
+            'unidades' => $unidades,
             'asignaturas' => $asignaturas,
-            'current_page' => 'asignaturas'
-        ]);
+            'current_page' => 'unidades']);
     }
 
     // FORMULARIO CREAR
     public function create()
     {
         $this->requireAuth();
-
         $stmt = $this->db->prepare("
-            SELECT id, nombre_curso, es_publico
+            SELECT id, nombre_asignatura, curso_id 
+            FROM asignaturas 
+            WHERE usuario_id = ?
+            ORDER BY curso_id DESC
+        ");
+        $stmt->execute([$_SESSION['user_id']]);
+        $asignaturas = $stmt->fetchAll();
+        $stmt = $this->db->prepare("
+            SELECT id, nombre_curso 
             FROM cursos 
-            WHERE usuario_id = ? 
+            WHERE usuario_id = ?
             ORDER BY nombre_curso DESC
         ");
         $stmt->execute([$_SESSION['user_id']]);
         $cursos = $stmt->fetchAll();
-
-        $this->dashboardView('asignaturas/create', ['current_page' => 'asignaturas', 'cursos' =>  $cursos]);
+        $this->dashboardView('unidades/create', [
+            'cursos' => $cursos,
+            'asignaturas' => $asignaturas,
+            'current_page' => 'unidades']);
     }
 
     // GUARDAR NUEVA
@@ -56,25 +83,26 @@ class AsignaturaController extends Controller
     {
         $this->requireAuth();
 
-        $nombre = trim($_POST['nombre_asignatura'] ?? '');
+        $nombre = trim($_POST['nombre_unidad'] ?? '');
         $descripcion = trim($_POST['descripcion'] ?? '');
         $es_publico = isset($_POST['es_publico']) ? 1 : 0;
-        $curso = trim($_POST['curso'] ?? '');
+        $curso_id = trim($_POST['curso'] ?? '');
+        $asignatura_id = trim($_POST['asignatura'] ?? '');
 
         if (empty($nombre)) {
             $_SESSION['error'] = "El nombre de la asignatura es obligatorio.";
-            $this->redirect('/asignatura/crear');
+            $this->redirect('/unidades/crear');
         }
 
         $stmt = $this->db->prepare("
-            INSERT INTO asignaturas 
-                (usuario_id, nombre_asignatura, descripcion, es_publico, curso_id) 
-            VALUES (?, ?, ?, ?, ?)
+            INSERT INTO unidades_didacticas 
+                (usuario_id, nombre_unidad, descripcion, es_publico, curso_id, asignatura_id) 
+            VALUES (?, ?, ?, ?, ?, ?)
         ");
-        $stmt->execute([$_SESSION['user_id'], $nombre, $descripcion, $es_publico, $curso]);
+        $stmt->execute([$_SESSION['user_id'], $nombre, $descripcion, $es_publico, $curso_id, $asignatura_id]);
 
         $_SESSION['success'] = "Asignatura creada correctamente.";
-        $this->redirect('/asignaturas');
+        $this->redirect('/unidades');
     }
 
     // FORMULARIO EDITAR
@@ -84,30 +112,20 @@ class AsignaturaController extends Controller
         $id = (int)$id;
 
         $stmt = $this->db->prepare("
-            SELECT * FROM asignaturas 
+            SELECT * FROM unidades_didacticas 
             WHERE id = ? AND usuario_id = ?
         ");
         $stmt->execute([$id, $_SESSION['user_id']]);
-        $asignatura = $stmt->fetch();
+        $unidades = $stmt->fetch();
 
-        $stmt = $this->db->prepare("
-            SELECT id, nombre_curso, es_publico
-            FROM cursos 
-            WHERE usuario_id = ? 
-            ORDER BY nombre_curso DESC
-        ");
-        $stmt->execute([$_SESSION['user_id']]);
-        $cursos = $stmt->fetchAll();
-
-        if (!$asignatura) {
-            $_SESSION['error'] = "Asignatura no encontrada.";
-            $this->redirect('/asignaturas');
+        if (!$unidades) {
+            $_SESSION['error'] = "Unidad no encontrada.";
+            $this->redirect('unidades');
         }
 
-        $this->dashboardView('asignaturas/edit', [
-            'asignatura' => $asignatura,
-            'current_page' => 'asignaturas', 
-            'cursos' =>  $cursos
+        $this->dashboardView('/unidades/edit', [
+            'unidades' => $unidades,
+            'current_page' => 'unidades'
         ]);
     }
 
@@ -122,7 +140,7 @@ class AsignaturaController extends Controller
         $stmt->execute([$id, $_SESSION['user_id']]);
         if (!$stmt->fetch()) {
             $_SESSION['error'] = "No tienes permiso para editar esta asignatura.";
-            $this->redirect('/asignaturas');
+            $this->redirect('unidades');
         }
 
         $nombre = trim($_POST['nombre_asignatura'] ?? '');
@@ -131,7 +149,7 @@ class AsignaturaController extends Controller
 
         if (empty($nombre)) {
             $_SESSION['error'] = "El nombre es obligatorio.";
-            $this->redirect("/asignatura/editar/{$id}");
+            $this->redirect("/unidades/editar/{$id}");
         }
 
         $stmt = $this->db->prepare("
@@ -143,8 +161,8 @@ class AsignaturaController extends Controller
         ");
         $stmt->execute([$nombre, $descripcion, $es_publico, $id]);
 
-        $_SESSION['success'] = "Asignatura actualizada.";
-        $this->redirect('/asignaturas');
+        $_SESSION['success'] = "Unidad actualizada.";
+        $this->redirect('/unidades');
     }
 
     // ELIMINAR
@@ -159,7 +177,7 @@ class AsignaturaController extends Controller
         ");
         $stmt->execute([$id, $_SESSION['user_id']]);
 
-        $_SESSION['success'] = "Asignatura eliminada correctamente.";
-        $this->redirect('/asignaturas');
+        $_SESSION['success'] = "Unidad eliminada correctamente.";
+        $this->redirect('/unidades');
     }
 }

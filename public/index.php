@@ -52,6 +52,14 @@ $router->add_route('GET',  '/asignatura/editar/{id}', 'AsignaturaController@edit
 $router->add_route('POST', '/asignatura/editar/{id}', 'AsignaturaController@update');
 $router->add_route('POST', '/asignatura/eliminar/{id}', 'AsignaturaController@delete');
 
+// === UNIDADES DIDÁCTICAS (solo profesor logueado) ===
+$router->add_route('GET',  '/unidades',          'UnidadesController@index');
+$router->add_route('GET',  '/unidades/crear',     'UnidadesController@create');
+$router->add_route('POST', '/unidades/crear',     'UnidadesController@store');
+$router->add_route('GET',  '/unidades/editar/{id}', 'UnidadesController@edit');
+$router->add_route('POST', '/unidades/editar/{id}', 'UnidadesController@update');
+$router->add_route('POST', '/unidades/eliminar/{id}', 'UnidadesController@delete');
+
 // ==============================================================
 
 // Obtener URL y método actual

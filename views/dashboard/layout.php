@@ -38,6 +38,9 @@
             <a class="nav-link <?= ($current_page ?? '') === 'asignaturas' ? 'active' : '' ?>" href="/asignaturas">
                 <i class="fas fa-book me-2"></i> Mis Asignaturas
             </a>
+            <a class="nav-link <?= ($current_page ?? '') === 'unidades' ? 'active' : '' ?>" href="/unidades">
+                <i class="fas fa-book me-2"></i> Mis Unidades
+            </a>
             <hr class="bg-light my-4">
             <a class="nav-link text-danger" href="/logout">
                 <i class="fas fa-sign-out-alt me-2"></i> Cerrar sesión
