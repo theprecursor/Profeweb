@@ -4,6 +4,7 @@
 namespace App\Controllers;
 
 use App\Core\Controller;
+use PDOException;
 
 class UnidadesController extends Controller
 {
@@ -52,6 +53,72 @@ class UnidadesController extends Controller
             'current_page' => 'unidades']);
     }
 
+    public function indexfilter()
+    {
+        $this->requireAuth();
+
+        $curso_id = trim($_POST['curso'] ?? '');
+        $asignatura_id = trim($_POST['asignatura'] ?? '');
+        $unidades= '';
+        if(empty($curso_id) && empty($asignatura_id)){
+            $stmt = $this->db->prepare("
+                SELECT *
+                FROM unidades_didacticas  
+                WHERE usuario_id = ?
+                ORDER BY orden DESC
+            ");
+            $stmt->execute([$_SESSION['user_id']]);
+            $unidades = $stmt->fetchAll();
+        } elseif(empty($asignatura_id)){
+            $stmt = $this->db->prepare("
+                SELECT *
+                FROM unidades_didacticas  
+                WHERE usuario_id = ? AND curso_id = ?
+                ORDER BY orden DESC
+            ");
+            $stmt->execute([$_SESSION['user_id'], $curso_id]);
+            $unidades = $stmt->fetchAll();
+        } elseif(empty($curso_id)){
+             $_SESSION['error'] = 'Debes de seleccionar un curso';
+        } else{
+            $stmt = $this->db->prepare("
+                SELECT *
+                FROM unidades_didacticas  
+                WHERE usuario_id = ? AND curso_id = ? AND asignatura_id = ?
+                ORDER BY orden DESC
+            ");
+            $stmt->execute([$_SESSION['user_id'], $curso_id, $asignatura_id]);
+            $unidades = $stmt->fetchAll();
+        }
+        
+
+        $stmt = $this->db->prepare("
+        SELECT id, nombre_asignatura, curso_id 
+        FROM asignaturas 
+        WHERE usuario_id = ?
+        ORDER BY curso_id DESC
+        ");
+        $stmt->execute([$_SESSION['user_id']]);
+        $asignaturas = $stmt->fetchAll();
+
+        $stmt = $this->db->prepare("
+            SELECT nombre_curso, id 
+            FROM cursos 
+            WHERE usuario_id = ?
+            ORDER BY nombre_curso ASC
+        ");
+        $stmt->execute([$_SESSION['user_id']]);
+        $cursos = $stmt->fetchAll();
+        $this->dashboardView('unidades/index', [
+            'cursos' => $cursos,
+            'unidades' => $unidades,
+            'asignaturas' => $asignaturas,
+            'current_page' => 'unidades']);
+        
+
+        
+    }
+
     // FORMULARIO CREAR
     public function create()
     {
@@ -95,14 +162,31 @@ class UnidadesController extends Controller
             $this->redirect('/unidades/crear');
         }
 
-        $stmt = $this->db->prepare("
+        
+        try{
+            $stmt = $this->db->prepare("
             INSERT INTO unidades_didacticas 
                 (usuario_id, nombre_unidad, descripcion, es_publico, curso_id, asignatura_id, orden) 
             VALUES (?, ?, ?, ?, ?, ?, ?)
-        ");
-        $stmt->execute([$_SESSION['user_id'], $nombre, $descripcion, $es_publico, $curso_id, $asignatura_id, $orden]);
-
-        $_SESSION['success'] = "Unidad creada correctamente.";
+            ");
+            $stmt->execute([$_SESSION['user_id'], $nombre, $descripcion, $es_publico, $curso_id, $asignatura_id, $orden]);
+            
+            $_SESSION['success'] = "Unidad creada correctamente.";
+        } catch(PDOException $e){
+            if(empty($curso_id) && empty($asignatura_id)){
+                $_SESSION['error'] = "La asignatura y el curso son obligatorios.";
+                $this->redirect("/unidades/crear");
+            }elseif(empty($curso_id)){
+                $_SESSION['error'] = "El curso es obligatorio.";
+                $this->redirect("/unidades/crear");
+            } elseif(empty($asignatura_id)) {
+                $_SESSION['error'] = "La asignatura es obligatoria.";
+                $this->redirect("/unidades/crear");
+            } else{
+                $_SESSION['error'] = 'Error desconocido';
+                $this->redirect("/unidades/crear");
+            }
+        }
         $this->redirect('/unidades');
     }
 
@@ -166,16 +250,12 @@ class UnidadesController extends Controller
         $nombre = trim($_POST['nombre_unidad'] ?? '');
         $descripcion = trim($_POST['descripcion'] ?? '');
         $es_publico = isset($_POST['es_publico']) ? 1 : 0;
-        $curso_id = trim($_POST['curso'] ?? '');
-        $asignatura_id = trim($_POST['asignatura'] ?? '');
+        $curso_id = trim($_POST['curso_id'] ?? null); 
+        $asignatura_id = trim($_POST['asignatura_id'] ?? null); 
         $orden = trim($_POST['orden'] ?? '');
 
-        if (empty($nombre)) {
-            $_SESSION['error'] = "El nombre es obligatorio.";
-            $this->redirect("/unidades/editar/{$id}");
-        }
-
-        $stmt = $this->db->prepare("
+        try{
+            $stmt = $this->db->prepare("
             UPDATE unidades_didacticas 
             SET nombre_unidad = ?, 
                 descripcion = ?, 
@@ -184,8 +264,24 @@ class UnidadesController extends Controller
                 orden = ?,
                 asignatura_id = ?
             WHERE id = ?
-        ");
-        $stmt->execute([$nombre, $descripcion, $es_publico, $curso_id, $orden, $asignatura_id, $id]);
+            ");
+            $stmt->execute([$nombre, $descripcion, $es_publico, $curso_id, $orden, $asignatura_id, $id]);
+        } catch(PDOException $e){
+            if(empty($curso_id)){
+                $_SESSION['error'] = "El curso es obligatorio.";
+                $this->redirect("/unidades/editar/{$id}");
+            } elseif(empty($asignatura_id)) {
+                $_SESSION['error'] = "La asignatura es obligatoria.";
+                $this->redirect("/unidades/editar/{$id}");
+            } elseif(empty($curso_id) && empty($asignatura_id)){
+                $_SESSION['error'] = "La asignatura y el curso son obligatorios.";
+                $this->redirect("/unidades/editar/{$id}");
+            } else{
+                $_SESSION['error'] = 'Error desconocido';
+                $this->redirect("/unidades/editar/{$id}");
+            }
+        }
+        
 
         $_SESSION['success'] = "Unidad actualizada.";
         $this->redirect('/unidades');

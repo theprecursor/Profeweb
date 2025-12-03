@@ -51,15 +51,18 @@ CREATE TABLE unidades_didacticas (
 CREATE TABLE criterios_evaluacion (
     id INT AUTO_INCREMENT PRIMARY KEY,
     codigo_criterio VARCHAR(50) NOT NULL,
-    es_publico TINYINT(1) DEFAULT 0
+    usuario_id INT NOT NULL,
+    es_publico TINYINT(1) DEFAULT 0,
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
 -- 7. Tabla Competencias
 CREATE TABLE competencias (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    asignatura_id INT NOT NULL,
     codigo_competencia VARCHAR(50) NOT NULL,
-    es_publico TINYINT(1) DEFAULT 0
+    usuario_id INT NOT NULL,
+    es_publico TINYINT(1) DEFAULT 0,
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
 -- 9. Tabla Actividades
@@ -72,8 +75,27 @@ CREATE TABLE actividades (
     fecha_entrega DATE,
     descripcion VARCHAR(255),
     es_publico TINYINT(1) DEFAULT 0,
+    usuario_id INT NOT NULL,
     FOREIGN KEY (unidad_id) REFERENCES unidades_didacticas(id) ON DELETE CASCADE,
     FOREIGN KEY (criterio_id) REFERENCES criterios_evaluacion(id) ON DELETE CASCADE,
-    FOREIGN KEY (competencia_id) REFERENCES competencias(id) ON DELETE CASCADE
+    FOREIGN KEY (competencia_id) REFERENCES competencias(id) ON DELETE CASCADE,
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
+-- 10. Tabla 1:N actividad-competencias
+CREATE TABLE actividad_competencias (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    id_actividades INT NOT NULL,
+    id_competencia VARCHAR(50) NOT NULL,
+    FOREIGN KEY (id_actividades) REFERENCES actividades(id) ON DELETE CASCADE,
+    FOREIGN KEY (id_competencia) REFERENCES competencias(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- 11. Tabla 1:N actividad-criterios
+CREATE TABLE actividad_criterio (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    id_actividades INT NOT NULL,
+    id_criterio VARCHAR(50) NOT NULL,
+    FOREIGN KEY (id_actividades) REFERENCES actividades(id) ON DELETE CASCADE,
+    FOREIGN KEY (id_criterio) REFERENCES criterios_evaluacion(id) ON DELETE CASCADE
+) ENGINE=InnoDB;

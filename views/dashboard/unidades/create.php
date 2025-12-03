@@ -1,4 +1,4 @@
-<!-- views/dashboard/asignaturas/create.php -->
+<!-- views/dashboard/actividades/create.php -->
 
 <h2 class="mb-4">
     Nueva Unidad didáctica

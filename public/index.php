@@ -54,11 +54,37 @@ $router->add_route('POST', '/asignatura/eliminar/{id}', 'AsignaturaController@de
 
 // === UNIDADES DIDÁCTICAS (solo profesor logueado) ===
 $router->add_route('GET',  '/unidades',          'UnidadesController@index');
+$router->add_route('POST', '/unidades',          'UnidadesController@indexfilter');
 $router->add_route('GET',  '/unidades/crear',     'UnidadesController@create');
 $router->add_route('POST', '/unidades/crear',     'UnidadesController@store');
 $router->add_route('GET',  '/unidades/editar/{id}', 'UnidadesController@edit');
 $router->add_route('POST', '/unidades/editar/{id}', 'UnidadesController@update');
 $router->add_route('POST', '/unidades/eliminar/{id}', 'UnidadesController@delete');
+
+// === ACTIVCIDADES (solo profesor logueado) ===
+$router->add_route('GET',  '/actividades',          'ActividadesController@index');
+$router->add_route('POST', '/actividades',          'ActividadesController@indexfilter');
+$router->add_route('GET',  '/actividades/crear',     'ActividadesController@create');
+$router->add_route('POST', '/actividades/crear',     'ActividadesController@store');
+$router->add_route('GET',  '/actividades/editar/{id}', 'ActividadesController@edit');
+$router->add_route('POST', '/actividades/editar/{id}', 'ActividadesController@update');
+$router->add_route('POST', '/actividades/eliminar/{id}', 'ActividadesController@delete');
+
+// === CRITERIOS DE EVALUACIÓN (solo profesor logueado) ===
+$router->add_route('GET',  '/criterios',          'CriterioController@index');
+$router->add_route('GET',  '/criterios/crear',     'CriterioController@create');
+$router->add_route('POST', '/criterios/crear',     'CriterioController@store');
+$router->add_route('GET',  '/criterios/editar/{id}', 'CriterioController@edit');
+$router->add_route('POST', '/criterios/editar/{id}', 'CriterioController@update');
+$router->add_route('POST', '/criterios/eliminar/{id}', 'CriterioController@delete');
+
+// === COMPETENCIAS (solo profesor logueado) ===
+$router->add_route('GET',  '/competencias',          'CompetenciasController@index');
+$router->add_route('GET',  '/competencias/crear',     'CompetenciasController@create');
+$router->add_route('POST', '/competencias/crear',     'CompetenciasController@store');
+$router->add_route('GET',  '/competencias/editar/{id}', 'CompetenciasController@edit');
+$router->add_route('POST', '/competencias/editar/{id}', 'CompetenciasController@update');
+$router->add_route('POST', '/competencias/eliminar/{id}', 'CompetenciasController@delete');
 
 // ==============================================================
 

@@ -2,7 +2,12 @@
     <h2 class="h3">Mis Unidades</h2>
     <a href="/unidades/crear" class="btn btn-success">Nueva unidad</a>
 </div>
-
+<?php if (isset($_SESSION['error'])): ?>
+    <div class="alert alert-danger alert-dismissible fade show">
+        <?= $_SESSION['error']; unset($_SESSION['error']); ?>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+<?php endif; ?>
 <!-- Formulario de Filtro (Se envía a UnidadesController@index por POST) -->
 <form method="POST" action="/unidades" id="filtro-unidades-form">
     <div class="mb-3 d-flex gap-4 align-items-center">

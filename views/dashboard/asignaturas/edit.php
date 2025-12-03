@@ -41,18 +41,18 @@
             </div>          
 
     <div class="mb-4">
-                <div class="form-check form-switch">
-                    <input class="form-check-input" 
-                           type="checkbox" 
-                           name="es_publico" 
-                           id="es_publico"
-                           checked="<?= htmlspecialchars($asignatura['es_publico']) ?>" 
-                           value="<?= htmlspecialchars($asignatura['es_publico']) ?>">
-                    <label class="form-check-label fw-bold" for="es_publico">
-                        Asignatura pública
-                    </label>
-                </div>
-            </div>
+        <div class="form-check form-switch">
+            <input class="form-check-input" 
+                    type="checkbox" 
+                    name="es_publico" 
+                    id="es_publico"
+                    checked="<?= htmlspecialchars($asignatura['es_publico']) ?>" 
+                    value="<?= htmlspecialchars($asignatura['es_publico']) ?>">
+            <label class="form-check-label fw-bold" for="es_publico">
+                Asignatura pública
+            </label>
+        </div>
+    </div>
     <button type="submit" class="btn btn-primary">Guardar cambios</button>
     <a href="/asignaturas" class="btn btn-secondary">Cancelar</a>
 </form>

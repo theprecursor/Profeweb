@@ -41,6 +41,15 @@
             <a class="nav-link <?= ($current_page ?? '') === 'unidades' ? 'active' : '' ?>" href="/unidades">
                 <i class="fas fa-book me-2"></i> Mis Unidades
             </a>
+            <a class="nav-link <?= ($current_page ?? '') === 'actividades' ? 'active' : '' ?>" href="/actividades">
+                <i class="fas fa-book me-2"></i> Mis Actividades
+            </a>
+            <a class="nav-link <?= ($current_page ?? '') === 'criterios' ? 'active' : '' ?>" href="/criterios">
+                <i class="fas fa-book me-2"></i> Mis Criterios
+            </a>
+            <a class="nav-link <?= ($current_page ?? '') === 'competencias' ? 'active' : '' ?>" href="/competencias">
+                <i class="fas fa-book me-2"></i> Mis Competencias
+            </a>
             <hr class="bg-light my-4">
             <a class="nav-link text-danger" href="/logout">
                 <i class="fas fa-sign-out-alt me-2"></i> Cerrar sesión
