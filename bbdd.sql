@@ -69,8 +69,6 @@ CREATE TABLE competencias (
 CREATE TABLE actividades (
     id INT AUTO_INCREMENT PRIMARY KEY,
     unidad_id INT NOT NULL,
-    criterio_id INT NOT NULL,
-    competencia_id INT NOT NULL,
     nombre_actividad VARCHAR(255) NOT NULL,
     fecha_entrega DATE,
     descripcion VARCHAR(255),
