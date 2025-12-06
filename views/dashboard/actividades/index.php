@@ -172,7 +172,7 @@ if ($unidad_id_actual && !empty($unidades_filtro)) {
                         <?= ($act['es_publico']) ? '<span class="badge bg-success">Pública</span>' : '<span class="badge bg-secondary">Borrador</span>' ?>
                     </td>
                     <td class="text-end">
-                        <a href="/actividad/editar/<?= $act['id'] ?>" class="btn btn-sm btn-outline-primary"><i class="fas fa-edit"></i></a>
+                        <a href="/actividades/editar/<?= $act['id'] ?>" class="btn btn-sm btn-outline-primary"><i class="fas fa-edit"></i></a>
                         <form method="POST" action="/actividades/eliminar/<?= $act['id'] ?>" class="d-inline">
                             <button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('¿Eliminar esta actividad?')">Eliminar</button>
                         </form>

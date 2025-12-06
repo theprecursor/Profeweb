@@ -40,6 +40,7 @@ CREATE TABLE unidades_didacticas (
     usuario_id INT NOT NULL,
     curso_id INT NOT NULL,
     nombre_unidad VARCHAR(255) NOT NULL,
+    descripcion VARCHAR(255),
     orden INT DEFAULT 0,
     es_publico TINYINT(1) DEFAULT 0,
     FOREIGN KEY (asignatura_id) REFERENCES asignaturas(id) ON DELETE CASCADE,

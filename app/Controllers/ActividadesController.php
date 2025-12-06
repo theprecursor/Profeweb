@@ -192,7 +192,7 @@ class ActividadesController extends Controller
             // B) Insertar Competencias (Tabla Pivot)
             if (!empty($competencias_ids)) {
                 // Asegúrate que tu tabla en BBDD se llame 'actividad_competencia'
-                $sqlComp = "INSERT INTO actividad_competencias (id_actividad, id_competencias) VALUES (?, ?)";
+                $sqlComp = "INSERT INTO actividad_competencias (id_actividades, id_competencia) VALUES (?, ?)";
                 $stmtComp = $this->db->prepare($sqlComp);
                 
                 foreach ($competencias_ids as $comp_id) {
@@ -206,7 +206,7 @@ class ActividadesController extends Controller
             // C) Insertar Criterios (Tabla Pivot)
             if (!empty($criterios_ids)) {
                 // Asegúrate que tu tabla en BBDD se llame 'actividad_criterio'
-                $sqlCrit = "INSERT INTO actividad_criterio (id_actividad, id_criterio) VALUES (?, ?)";
+                $sqlCrit = "INSERT INTO actividad_criterio (id_actividades, id_criterio) VALUES (?, ?)";
                 $stmtCrit = $this->db->prepare($sqlCrit);
                 
                 foreach ($criterios_ids as $crit_id) {
@@ -232,100 +232,138 @@ class ActividadesController extends Controller
     }
 
     // FORMULARIO EDITAR
-    public function edit($id)
-    {
+    public function edit($id) {
         $this->requireAuth();
         $id = (int)$id;
 
+        // 1. Obtener datos básicos de la actividad
+        // Validamos que pertenezca a una unidad del usuario actual (por seguridad)
         $stmt = $this->db->prepare("
-            SELECT * FROM unidades_didacticas 
-            WHERE id = ? AND usuario_id = ?
+            SELECT a.*, u.asignatura_id, asig.curso_id 
+            FROM actividades a
+            JOIN unidades_didacticas u ON a.unidad_id = u.id
+            JOIN asignaturas asig ON u.asignatura_id = asig.id
+            WHERE a.id = ? AND asig.usuario_id = ?
         ");
         $stmt->execute([$id, $_SESSION['user_id']]);
-        $unidades = $stmt->fetch();
+        $actividad = $stmt->fetch();
 
-        $stmt = $this->db->prepare("
-            SELECT id, nombre_asignatura, curso_id 
-            FROM asignaturas 
-            WHERE usuario_id = ?
-            ORDER BY curso_id DESC
-        ");
-        $stmt->execute([$_SESSION['user_id']]);
-        $asignaturas = $stmt->fetchAll();
-        $stmt = $this->db->prepare("
-            SELECT id, nombre_curso 
-            FROM cursos 
-            WHERE usuario_id = ?
-            ORDER BY nombre_curso DESC
-        ");
+        if (!$actividad) {
+            $_SESSION['error'] = "Actividad no encontrada o no tienes permiso.";
+            $this->redirect('/actividades');
+            return;
+        }
+
+        // 2. Obtener IDs de competencias seleccionadas previamente
+        $stmtComp = $this->db->prepare("SELECT id_competencia FROM actividad_competencias WHERE id_actividades = ?");
+        $stmtComp->execute([$id]);
+        // Convertimos a un array simple de IDs: [1-3]
+        $competencias_seleccionadas = $stmtComp->fetchAll(\PDO::FETCH_COLUMN);
+
+        // 3. Obtener IDs de criterios seleccionados previamente
+        $stmtCrit = $this->db->prepare("SELECT id_criterio FROM actividad_criterio WHERE id_actividades = ?");
+        $stmtCrit->execute([$id]);
+        $criterios_seleccionados = $stmtCrit->fetchAll(\PDO::FETCH_COLUMN);
+
+        // 4. Cargar listas para los desplegables (igual que en create)
+        // Cursos
+        $stmt = $this->db->prepare("SELECT * FROM cursos WHERE usuario_id = ?");
         $stmt->execute([$_SESSION['user_id']]);
         $cursos = $stmt->fetchAll();
 
-        if (!$unidades) {
-            $_SESSION['error'] = "Unidad no encontrada.";
-            $this->redirect('unidades');
-        }
+        // Asignaturas
+        $stmt = $this->db->prepare("SELECT * FROM asignaturas WHERE usuario_id = ?");
+        $stmt->execute([$_SESSION['user_id']]);
+        $asignaturas = $stmt->fetchAll();
 
-        $this->dashboardView('/unidades/edit', [
-            'unidades' => $unidades,
+        // Unidades
+        $stmt = $this->db->prepare("SELECT u.*, a.curso_id FROM unidades_didacticas u JOIN asignaturas a ON u.asignatura_id = a.id WHERE a.usuario_id = ?");
+        $stmt->execute([$_SESSION['user_id']]);
+        $unidades = $stmt->fetchAll();
+
+        // Competencias y Criterios (Globales o filtrados, según tu lógica original)
+        // Aquí traigo todos, igual que en el create
+        $stmt = $this->db->prepare("SELECT * FROM competencias"); 
+        $stmt->execute();
+        $competencias = $stmt->fetchAll();
+
+        $stmt = $this->db->prepare("SELECT * FROM criterios_evaluacion");
+        $stmt->execute();
+        $criterios_evaluacion = $stmt->fetchAll();
+
+        // 5. Renderizar vista
+        $this->dashboardView('actividades/edit', [
+            'actividad' => $actividad,
+            'competencias_seleccionadas' => $competencias_seleccionadas,
+            'criterios_seleccionados' => $criterios_seleccionados,
             'cursos' => $cursos,
             'asignaturas' => $asignaturas,
-            'current_page' => 'unidades'
+            'unidades' => $unidades,
+            'competencias' => $competencias,
+            'criterios_evaluacion' => $criterios_evaluacion,
+            'current_page' => 'actividades'
         ]);
     }
 
-    // ACTUALIZAR
-    public function update($id)
-    {
-        printf('llegando aquí');
+    // Procesa la actualización
+    public function update($id) {
         $this->requireAuth();
         $id = (int)$id;
 
-        $stmt = $this->db->prepare("SELECT id FROM unidades_didacticas WHERE id = ? AND usuario_id = ?");
-        $stmt->execute([$id, $_SESSION['user_id']]);
-        if (!$stmt->fetch()) {
-            $_SESSION['error'] = "No tienes permiso para editar esta asignatura.";
-            $this->redirect('unidades');
-        }
-
-        $nombre = trim($_POST['nombre_unidad'] ?? '');
+        // Recoger datos
+        $nombre = trim($_POST['nombre_actividad'] ?? '');
         $descripcion = trim($_POST['descripcion'] ?? '');
+        $fecha_entrega = !empty($_POST['fecha_entrega']) ? $_POST['fecha_entrega'] : null;
         $es_publico = isset($_POST['es_publico']) ? 1 : 0;
-        $curso_id = trim($_POST['curso_id'] ?? null); 
-        $asignatura_id = trim($_POST['asignatura_id'] ?? null); 
-        $orden = trim($_POST['orden'] ?? '');
-
-        try{
-            $stmt = $this->db->prepare("
-            UPDATE unidades_didacticas 
-            SET nombre_unidad = ?, 
-                descripcion = ?, 
-                es_publico = ?, 
-                curso_id = ?,
-                orden = ?,
-                asignatura_id = ?
-            WHERE id = ?
-            ");
-            $stmt->execute([$nombre, $descripcion, $es_publico, $curso_id, $orden, $asignatura_id, $id]);
-        } catch(PDOException $e){
-            if(empty($curso_id)){
-                $_SESSION['error'] = "El curso es obligatorio.";
-                $this->redirect("/unidades/editar/{$id}");
-            } elseif(empty($asignatura_id)) {
-                $_SESSION['error'] = "La asignatura es obligatoria.";
-                $this->redirect("/unidades/editar/{$id}");
-            } elseif(empty($curso_id) && empty($asignatura_id)){
-                $_SESSION['error'] = "La asignatura y el curso son obligatorios.";
-                $this->redirect("/unidades/editar/{$id}");
-            } else{
-                $_SESSION['error'] = 'Error desconocido';
-                $this->redirect("/unidades/editar/{$id}");
-            }
-        }
+        $unidad_id = $_POST['unidad_id'] ?? null;
         
+        $competencias_ids = $_POST['competencias'] ?? [];
+        $criterios_ids = $_POST['criterios'] ?? [];
 
-        $_SESSION['success'] = "Unidad actualizada.";
-        $this->redirect('/unidades');
+        if (empty($nombre) || empty($unidad_id)) {
+            $_SESSION['error'] = "Nombre y Unidad obligatorios.";
+            $this->redirect("/actividades/editar/$id");
+            return;
+        }
+
+        try {
+            $this->db->beginTransaction();
+
+            // 1. Actualizar tabla actividades
+            $sql = "UPDATE actividades SET nombre_actividad = ?, descripcion = ?, fecha_entrega = ?, es_publico = ?, unidad_id = ? WHERE id = ?";
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute([$nombre, $descripcion, $fecha_entrega, $es_publico, $unidad_id, $id]);
+
+            // 2. Actualizar Competencias (Borrar anteriores e insertar nuevas)
+            $this->db->prepare("DELETE FROM actividad_competencias WHERE id_actividades = ?")->execute([$id]);
+            
+            if (!empty($competencias_ids)) {
+                $stmtComp = $this->db->prepare("INSERT INTO actividad_competencias (id_actividades, id_competencia) VALUES (?, ?)");
+                foreach ($competencias_ids as $c_id) {
+                    $stmtComp->execute([$id, $c_id]);
+                }
+            }
+
+            // 3. Actualizar Criterios (Borrar anteriores e insertar nuevos)
+            $this->db->prepare("DELETE FROM actividad_criterio WHERE id_actividades = ?")->execute([$id]);
+
+            if (!empty($criterios_ids)) {
+                $stmtCrit = $this->db->prepare("INSERT INTO actividad_criterio (id_actividades, id_criterio) VALUES (?, ?)");
+                foreach ($criterios_ids as $crit_id) {
+                    $stmtCrit->execute([$id, $crit_id]);
+                }
+            }
+
+            $this->db->commit();
+            $_SESSION['success'] = "Actividad actualizada correctamente.";
+            $this->redirect('/actividades');
+
+        } catch (\PDOException $e) {
+            $this->db->rollBack();
+            error_log("Error update actividad: " . $e->getMessage());
+            $_SESSION['error'] = "Error al actualizar: " . $e->getMessage();
+            $this->redirect("/actividades/editar/$id");
+        }
     }
 
     // ELIMINAR
@@ -335,12 +373,12 @@ class ActividadesController extends Controller
         $id = (int)$id;
 
         $stmt = $this->db->prepare("
-            DELETE FROM asignaturas 
+            DELETE FROM actividades 
             WHERE id = ? AND usuario_id = ?
         ");
         $stmt->execute([$id, $_SESSION['user_id']]);
 
         $_SESSION['success'] = "Unidad eliminada correctamente.";
-        $this->redirect('/unidades');
+        $this->redirect('/actividades');
     }
 }

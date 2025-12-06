@@ -1,237 +1,288 @@
 <?php
-// Asumimos que el controlador pasa $unidad, $cursos, y $asignaturas.
-// Usamos $u para la unidad para simplificar el código.
-$u = $unidades; 
-$curso_id_seleccionado = $u['curso_id'] ?? null;
-$asignatura_id_seleccionada = $u['asignatura_id'] ?? null;
-$es_publico_seleccionado = (bool)($u['es_publico'] ?? 0);
+// Pre-cálculo de nombres para los botones de los dropdowns
+$nombre_curso_actual = 'Seleccionar Curso';
+$nombre_asig_actual = 'Seleccionar Asignatura';
+$nombre_unidad_actual = 'Seleccionar Unidad';
 
-// =========================================================================
-// LÓGICA PHP PARA BUSCAR LOS NOMBRES (Preselección visual)
-// =========================================================================
-
-// 1. Buscar el nombre del curso actual
-$curso_nombre_actual = 'Seleccionar Curso';
-if ($curso_id_seleccionado && isset($cursos)) {
-    foreach ($cursos as $c) {
-        if ((int)($c['id'] ?? 0) === (int)$curso_id_seleccionado) {
-            $curso_nombre_actual = $c['nombre_curso'];
-            break;
-        }
+// Buscamos los nombres correspondientes a los IDs guardados
+if(!empty($cursos)) {
+    foreach($cursos as $c) {
+        if($c['id'] == $actividad['curso_id']) $nombre_curso_actual = $c['nombre_curso'];
     }
 }
-
-// 2. Buscar el nombre de la asignatura actual
-$asignatura_nombre_actual = 'Seleccionar Asignatura';
-if ($asignatura_id_seleccionada && isset($asignaturas)) {
-    foreach ($asignaturas as $a) {
-        if ((int)($a['id'] ?? 0) === (int)$asignatura_id_seleccionada) {
-            $asignatura_nombre_actual = $a['nombre_asignatura'];
-            break;
-        }
+if(!empty($asignaturas)) {
+    foreach($asignaturas as $a) {
+        if($a['id'] == $actividad['asignatura_id']) $nombre_asig_actual = $a['nombre_asignatura'];
+    }
+}
+if(!empty($unidades)) {
+    foreach($unidades as $u) {
+        if($u['id'] == $actividad['unidad_id']) $nombre_unidad_actual = $u['nombre_unidad'];
     }
 }
 ?>
 
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h2 class="h3">Editar Unidad: <?= htmlspecialchars($u['nombre_unidad'] ?? '') ?></h2>
-    <a href="/unidades" class="btn btn-secondary">Volver al listado</a>
+    <h1>Editar Actividad</h1>
+    <a href="/actividades" class="btn btn-secondary">Volver</a>
 </div>
 
-<!-- El formulario se envía por POST al Controlador UnidadesController@update -->
-<form method="POST" action="/unidades/editar/<?= $u['id'] ?>">
+<!-- OJO: La acción apunta a la ruta de actualización con el ID -->
+<form method="POST" action="/actividades/editar/<?= $actividad['id'] ?>">
 
-    <div class="mb-3">
-        <label for="nombre_unidad" class="form-label">Nombre de la Unidad</label>
-        <input type="text" class="form-control" id="nombre_unidad" name="nombre_unidad" 
-               value="<?= htmlspecialchars($u['nombre_unidad'] ?? '') ?>" required>
-    </div>
+    <!-- 1. DATOS BÁSICOS -->
+    <div class="card mb-4">
+        <div class="card-header">Datos Generales</div>
+        <div class="card-body">
+            <div class="row mb-3">
+                <div class="col-md-8">
+                    <label class="form-label">Nombre de la Actividad <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" name="nombre_actividad" 
+                           value="<?= htmlspecialchars($actividad['nombre_actividad']) ?>" required>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Fecha de Entrega</label>
+                    <input type="date" class="form-control" name="fecha_entrega" 
+                           value="<?= $actividad['fecha_entrega'] ?>">
+                </div>
+            </div>
 
-    <div class="mb-3">
-        <label for="descripcion" class="form-label">Número de la Unidad</label>
-        <textarea class="form-control" id="orden" name="orden" rows="3"><?= htmlspecialchars($u['orden'] ?? '') ?></textarea>
-    </div>
+            <div class="mb-3">
+                <label class="form-label">Descripción</label>
+                <textarea class="form-control" name="descripcion" rows="2"><?= htmlspecialchars($actividad['descripcion']) ?></textarea>
+            </div>
 
-    <div class="mb-3">
-        <label for="descripcion" class="form-label">Descripción</label>
-        <textarea class="form-control" id="descripcion" name="descripcion" rows="3"><?= htmlspecialchars($u['descripcion'] ?? '') ?></textarea>
-    </div>
-
-    <!-- ======================================================= -->
-    <!-- DESPLEGABLES DE CURSO Y ASIGNATURA -->
-    <!-- ======================================================= -->
-    <div class="mb-3 row">
-        
-        <!-- Desplegable Curso -->
-        <div class="col-md-6">
-            <label class="form-label">Curso</label>
-            <!-- 🚨 Campo oculto inicializado con el valor de la Unidad 🚨 -->
-            <input type="hidden" name="curso_id" id="curso_id_hidden" 
-                   value="<?= htmlspecialchars($curso_id_seleccionado) ?>"> 
-
-            <div class="dropdown">
-                <button class="btn btn-secondary dropdown-toggle" type="button" 
-                        id="dropdownCursos" data-bs-toggle="dropdown" aria-expanded="false">
-                    <!-- 🚨 Muestra el nombre preseleccionado 🚨 -->
-                    <?= htmlspecialchars($curso_nombre_actual) ?>
-                </button>
-                <ul class="dropdown-menu" aria-labelledby="dropdownCursos" id="curso-menu">
-                    <?php if (isset($cursos)): ?>
-                    <?php foreach ($cursos as $c): ?>
-                    <li>
-                        <button class="dropdown-item select-item-btn" 
-                                type="button" 
-                                data-target-id="curso_id_hidden" 
-                                data-target-btn="dropdownCursos"
-                                data-value="<?= $c['id'] ?>">
-                            <?= htmlspecialchars($c['nombre_curso']) ?>
+            <div class="row">
+                <!-- Curso -->
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Curso <span class="text-danger">*</span></label>
+                    <input type="hidden" name="curso_id" id="curso_id_hidden" value="<?= $actividad['curso_id'] ?>" required>
+                    <div class="dropdown w-100">
+                        <button class="btn btn-outline-secondary dropdown-toggle w-100 text-start" type="button" 
+                                id="btnCurso" data-bs-toggle="dropdown">
+                            <?= htmlspecialchars($nombre_curso_actual) ?>
                         </button>
-                    </li> 
-                    <?php endforeach; ?>
-                    <?php endif; ?>
-                </ul>
+                        <ul class="dropdown-menu w-100">
+                            <?php foreach ($cursos as $c): ?>
+                                <li><button class="dropdown-item select-item-btn" type="button" 
+                                    data-target-id="curso_id_hidden" 
+                                    data-target-btn="btnCurso" 
+                                    data-type="curso"
+                                    data-value="<?= $c['id'] ?>"><?= htmlspecialchars($c['nombre_curso']) ?></button></li>
+                            <?php endforeach; ?>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Asignatura -->
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Asignatura <span class="text-danger">*</span></label>
+                    <input type="hidden" name="asignatura_id" id="asignatura_id_hidden" value="<?= $actividad['asignatura_id'] ?>" required>
+                    <div class="dropdown w-100">
+                        <button class="btn btn-outline-secondary dropdown-toggle w-100 text-start" type="button" 
+                                id="btnAsignatura" data-bs-toggle="dropdown">
+                             <?= htmlspecialchars($nombre_asig_actual) ?>
+                        </button>
+                        <ul class="dropdown-menu w-100">
+                            <?php foreach ($asignaturas as $a): ?>
+                                <li class="asignatura-option" data-curso-id="<?= $a['curso_id'] ?>">
+                                    <button class="dropdown-item select-item-btn" type="button" 
+                                        data-target-id="asignatura_id_hidden" 
+                                        data-target-btn="btnAsignatura" 
+                                        data-type="asignatura"
+                                        data-value="<?= $a['id'] ?>"><?= htmlspecialchars($a['nombre_asignatura']) ?></button>
+                                </li>
+                            <?php endforeach; ?>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Unidad -->
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Unidad Didáctica <span class="text-danger">*</span></label>
+                    <input type="hidden" name="unidad_id" id="unidad_id_hidden" value="<?= $actividad['unidad_id'] ?>" required>
+                    <div class="dropdown w-100">
+                        <button class="btn btn-outline-secondary dropdown-toggle w-100 text-start" type="button" 
+                                id="btnUnidad" data-bs-toggle="dropdown">
+                            <?= htmlspecialchars($nombre_unidad_actual) ?>
+                        </button>
+                        <ul class="dropdown-menu w-100">
+                            <?php foreach ($unidades as $u): ?>
+                                <li class="unidad-option" data-asignatura-id="<?= $u['asignatura_id'] ?>">
+                                    <button class="dropdown-item select-item-btn" type="button" 
+                                        data-target-id="unidad_id_hidden" 
+                                        data-target-btn="btnUnidad" 
+                                        data-type="unidad"
+                                        data-value="<?= $u['id'] ?>"><?= htmlspecialchars($u['nombre_unidad']) ?></button>
+                                </li>
+                            <?php endforeach; ?>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. VINCULACIÓN CURRICULAR (TABLAS CON CHECKBOXES PRE-MARCADOS) -->
+    <div class="row">
+        <!-- Competencias -->
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-light fw-bold">Competencias a evaluar</div>
+                <div class="card-body p-0 table-responsive" style="max-height: 300px;">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light sticky-top">
+                            <tr>
+                                <th class="text-center" style="width: 50px;"><i class="fas fa-check"></i></th>
+                                <th>Código</th>
+                                <th>Descripción</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php if (!empty($competencias)): ?>
+                                <?php foreach ($competencias as $comp): ?>
+                                    <?php 
+                                        // Verificamos si está en el array de seleccionados
+                                        $checked = in_array($comp['id'], $competencias_seleccionadas) ? 'checked' : ''; 
+                                    ?>
+                                <tr>
+                                    <td class="text-center align-middle">
+                                        <input class="form-check-input" type="checkbox" 
+                                               name="competencias[]" 
+                                               value="<?= $comp['id'] ?>" <?= $checked ?>>
+                                    </td>
+                                    <td class="align-middle"><?= htmlspecialchars($comp['codigo_competencia']) ?></td>
+                                </tr>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <tr><td colspan="3" class="text-center text-muted">No hay competencias disponibles.</td></tr>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
-        <!-- Desplegable Asignatura -->
-        <div class="col-md-6">
-            <label class="form-label">Asignatura</label>
-            <!-- Campo oculto inicializado con el valor de la Unidad -->
-            <input type="hidden" name="asignatura_id" id="asignatura_id_hidden" 
-                   value="<?= htmlspecialchars($asignatura_id_seleccionada) ?>">
-
-            <div class="dropdown">
-                <button class="btn btn-secondary dropdown-toggle" type="button" 
-                        id="dropdownAsignaturas" data-bs-toggle="dropdown" aria-expanded="false">
-                     <!-- Muestra el nombre preseleccionado -->
-                    <?= htmlspecialchars($asignatura_nombre_actual) ?>
-                </button>
-                <ul class="dropdown-menu" aria-labelledby="dropdownAsignaturas" id="asignatura-menu">
-                    <?php if (isset($asignaturas) && is_array($asignaturas)): ?>
-                    <?php foreach ($asignaturas as $a): ?>
-                    <li>
-                        <button class="dropdown-item select-item-btn asignatura-option" 
-                                type="button" 
-                                data-target-id="asignatura_id_hidden" 
-                                data-target-btn="dropdownAsignaturas"
-                                data-value="<?= $a['id'] ?>"
-                                data-curso-id="<?= $a['curso_id'] ?>" 
-                                style="display: none;"> <!-- Ocultas por defecto por JS -->
-                            <?= htmlspecialchars($a['nombre_asignatura']) ?>
-                        </button>
-                    </li>
-                    <?php endforeach; ?>
-                    <?php endif; ?>
-                </ul>
+        <!-- Criterios -->
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-light fw-bold">Criterios de Evaluación</div>
+                <div class="card-body p-0 table-responsive" style="max-height: 300px;">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light sticky-top">
+                            <tr>
+                                <th class="text-center" style="width: 50px;"><i class="fas fa-check"></i></th>
+                                <th>Código</th>
+                                <th>Descripción</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php if (!empty($criterios_evaluacion)): ?>
+                                <?php foreach ($criterios_evaluacion as $crit): ?>
+                                    <?php 
+                                        // Verificamos si está seleccionado
+                                        $checked = in_array($crit['id'], $criterios_seleccionados) ? 'checked' : ''; 
+                                    ?>
+                                <tr>
+                                    <td class="text-center align-middle">
+                                        <input class="form-check-input" type="checkbox" 
+                                               name="criterios[]" 
+                                               value="<?= $crit['id'] ?>" <?= $checked ?>>
+                                    </td>
+                                    <td class="align-middle"><?= htmlspecialchars($crit['codigo_criterio']) ?></td>
+                                </tr>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <tr><td colspan="3" class="text-center text-muted">No hay criterios disponibles.</td></tr>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
-    
-    <!-- Checkbox Público/Privado -->
+
     <div class="form-check mb-4">
-        <input class="form-check-input" type="checkbox" name="es_publico" 
-               value="1" id="es_publico" <?= $es_publico_seleccionado ? 'checked' : '' ?>>               
+        <input class="form-check-input" type="checkbox" name="es_publico" value="1" id="es_publico" <?= $actividad['es_publico'] ? 'checked' : '' ?>>
         <label class="form-check-label" for="es_publico">
-            Unidad pública
+            Actividad pública (visible para alumnos)
         </label>
     </div>
 
-    <button type="submit" class="btn btn-primary">Guardar cambios</button>
-    <a href="/unidades" class="btn btn-outline-secondary">Cancelar</a>
+    <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary btn-lg">Guardar Cambios</button>
+        <a href="/actividades" class="btn btn-outline-secondary btn-lg">Cancelar</a>
+    </div>
+
 </form>
+
+<!-- Mismo script que en create.php para la cascada de selects -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    
-    // 1. Elementos clave para la interactividad
-    const asignaturaBtnVisible = document.getElementById('dropdownAsignaturas');
-    const todasLasAsignaturasOptions = document.querySelectorAll('.asignatura-option');
+    const asignaturasOps = document.querySelectorAll('.asignatura-option');
+    const unidadesOps = document.querySelectorAll('.unidad-option');
+    const btnAsignatura = document.getElementById('btnAsignatura');
+    const btnUnidad = document.getElementById('btnUnidad');
+    const inputAsig = document.getElementById('asignatura_id_hidden');
+    const inputUnidad = document.getElementById('unidad_id_hidden');
 
-    // =======================================================
-    // FUNCIÓN CENTRAL DE FILTRADO (REUTILIZABLE)
-    // =======================================================
-    function filterAsignaturas(cursoId) {
-        
-        // A) Ocultar TODAS las opciones de asignaturas
-        todasLasAsignaturasOptions.forEach(option => {
-            const liElement = option.closest('li');
-            if (liElement) {
-                liElement.style.display = 'none'; 
+    // Funciones de filtrado (igual que en create)
+    function filtrarAsignaturas(cursoId) {
+        asignaturasOps.forEach(li => {
+            if(li.getAttribute('data-curso-id') == cursoId) {
+                li.style.display = 'block';
+            } else {
+                li.style.display = 'none';
             }
         });
-        
-        // B) Mostrar solo las asignaturas coincidentes si el ID es válido
-        if (cursoId && cursoId !== 'undefined' && cursoId !== '') {
-            const selector = `.asignatura-option[data-curso-id="${cursoId}"]`;
-            const asignaturasFiltradas = document.querySelectorAll(selector);
-            
-            // 🚨 DEBUG opcional, puede eliminar estas líneas si funciona:
-            console.log("Inicializando/Filtrando con Curso ID:", cursoId);
-            console.log("Asignaturas encontradas:", asignaturasFiltradas.length);
-            // 🚨 Fin de DEBUG
-
-            if (asignaturasFiltradas.length > 0) {
-                asignaturasFiltradas.forEach(option => {
-                    const liElement = option.closest('li');
-                    if (liElement) {
-                        liElement.style.display = 'list-item'; // Usamos 'list-item' para forzar la visibilidad del LI
-                    }
-                });
-            }
-        }
     }
 
-
-    // =======================================================
-    // 🚨 INICIALIZACIÓN AUTOMÁTICA AL CARGAR LA PÁGINA (SOLUCIÓN)
-    // =======================================================
-    // Lee el ID preseleccionado por PHP e inicializa el filtro.
-    const cursoIdInicial = document.getElementById('curso_id_hidden').value;
-    if (cursoIdInicial) {
-        filterAsignaturas(cursoIdInicial);
+    function filtrarUnidades(asignaturaId) {
+        unidadesOps.forEach(li => {
+            if(li.getAttribute('data-asignatura-id') == asignaturaId) {
+                li.style.display = 'block';
+            } else {
+                li.style.display = 'none';
+            }
+        });
     }
 
+    // Inicialización: Asegurar que los desplegables muestren las opciones correctas al cargar
+    // basado en lo que ya tiene la actividad guardada
+    const cursoInicial = document.getElementById('curso_id_hidden').value;
+    const asigInicial = document.getElementById('asignatura_id_hidden').value;
+    
+    if(cursoInicial) filtrarAsignaturas(cursoInicial);
+    if(asigInicial) filtrarUnidades(asigInicial);
 
-    // =======================================================
-    // MANEJADOR DE EVENTOS (PARA NUEVAS SELECCIONES MANUALES)
-    // =======================================================
-    document.querySelectorAll('.select-item-btn').forEach(button => {
-        button.addEventListener('click', function(event) {
-            
-            event.preventDefault(); 
+    // Manejador de clics (igual que en create)
+    document.querySelectorAll('.select-item-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const type = this.getAttribute('data-type');
+            const val = this.getAttribute('data-value');
+            const label = this.textContent.trim();
+            const targetInput = document.getElementById(this.getAttribute('data-target-id'));
+            const targetBtn = document.getElementById(this.getAttribute('data-target-btn'));
 
-            // 1. Obtención de datos y referencias
-            const targetId = this.getAttribute('data-target-id');
-            const valorSeleccionado = this.getAttribute('data-value');
-            const nombreSeleccionado = this.textContent.trim(); 
-            const targetBtnId = this.getAttribute('data-target-btn');
-            
-            const inputOculto = document.getElementById(targetId);
-            const botonVisible = document.getElementById(targetBtnId);
+            targetInput.value = val;
+            targetBtn.textContent = label;
 
-            // 2. Actualización visual y de datos
-            if (botonVisible) {
-                botonVisible.textContent = nombreSeleccionado; // Actualiza el texto del botón visible
+            if(type === 'curso') {
+                inputAsig.value = '';
+                btnAsignatura.textContent = 'Seleccionar Asignatura';
+                inputUnidad.value = '';
+                btnUnidad.textContent = 'Seleccionar Unidad';
+                filtrarUnidades(null);
+                filtrarAsignaturas(val);
+                btnAsignatura.click();
             }
-            if (inputOculto) {
-                inputOculto.value = valorSeleccionado; 
-            }
-            
-            // 3. Lógica de Filtrado en Cascada (Solo si se selecciona un CURSO)
-            if (targetId === 'curso_id_hidden') {
-                const cursoId = valorSeleccionado;
-                
-                // Reiniciar Asignaturas (cuando se selecciona un nuevo curso)
-                asignaturaBtnVisible.textContent = 'Seleccionar Asignatura';
-                document.getElementById('asignatura_id_hidden').value = ''; 
-                
-                filterAsignaturas(cursoId);
-                
-                // Opcional: Abrir el desplegable de Asignaturas (mejora UX)
-                const asignaturaButton = document.getElementById('dropdownAsignaturas');
-                if (asignaturaButton) {
-                    // Simula un clic para que el plugin Dropdown de Bootstrap lo abra [1, 2]
-                    asignaturaButton.click(); 
-                }
+
+            if(type === 'asignatura') {
+                inputUnidad.value = '';
+                btnUnidad.textContent = 'Seleccionar Unidad';
+                filtrarUnidades(val);
+                btnUnidad.click();
             }
         });
     });

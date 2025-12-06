@@ -61,7 +61,7 @@ $router->add_route('GET',  '/unidades/editar/{id}', 'UnidadesController@edit');
 $router->add_route('POST', '/unidades/editar/{id}', 'UnidadesController@update');
 $router->add_route('POST', '/unidades/eliminar/{id}', 'UnidadesController@delete');
 
-// === ACTIVCIDADES (solo profesor logueado) ===
+// === ACTIVIDADES (solo profesor logueado) ===
 $router->add_route('GET',  '/actividades',          'ActividadesController@index');
 $router->add_route('POST', '/actividades',          'ActividadesController@indexfilter');
 $router->add_route('GET',  '/actividades/crear',     'ActividadesController@create');
