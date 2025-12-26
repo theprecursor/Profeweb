@@ -8,7 +8,7 @@
         
         <div class="d-flex gap-2 align-items-center">
             <!-- FORMULARIO DE FILTRO -->
-            <form action="<?= ROOT_URL ?>/asignaturas" method="GET" class="d-flex align-items-center">
+            <form action="/asignaturas" method="GET" class="d-flex align-items-center">
                 <div class="input-group">
                     <span class="input-group-text bg-white border-end-0">
                         <i class="fas fa-filter text-muted"></i>
@@ -101,12 +101,12 @@
                         <div class="card-footer bg-transparent border-0 pb-3">
                                 <div class="d-grid gap-2">
                                     <!-- Botón Editar -->
-                                    <a href="asignatura/editar/<?= $asignatura['curso_id'] ?>" class="btn btn-outline-primary btn-sm">
-                                        <i class="fas fa-edit me-2"></i>Editar
+                                    <a href="asignatura/editar/<?= $asignatura['id'] ?>" class="btn btn-outline-primary btn-sm">
+                                    <i class="fas fa-edit me-2"></i>Editar
                                     </a>
                                     
                                     <!-- Botón Eliminar (Formulario para seguridad) -->
-                                    <form action="asignatura/eliminar/<?= $asignatura['curso_id'] ?>" method="POST" onsubmit="return confirm('¿Estás seguro de eliminar este curso?');" style="display:inline;">
+                                    <form action="asignatura/eliminar/<?= $asignatura['id'] ?>" method="POST" onsubmit="return confirm('¿Estás seguro de eliminar este curso?');" style="display:inline;">
                                         <button type="submit" class="btn btn-outline-danger btn-sm w-100">
                                             <i class="fas fa-trash-alt me-2"></i>Eliminar
                                         </button>

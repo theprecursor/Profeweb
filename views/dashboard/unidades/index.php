@@ -125,12 +125,12 @@
                     <div class="card-footer bg-transparent border-0 pb-3">
                             <div class="d-grid gap-2">
                                 <!-- Botón Editar -->
-                                <a href="unidades/editar/<?= $curso['id'] ?>" class="btn btn-outline-primary btn-sm">
+                                <a href="unidades/editar/<?= $u['id'] ?>" class="btn btn-outline-primary btn-sm">
                                     <i class="fas fa-edit me-2"></i>Editar
                                 </a>
                                 
                                 <!-- Botón Eliminar (Formulario para seguridad) -->
-                                <form action="unidades/eliminar/<?= $curso['id'] ?>" method="POST" onsubmit="return confirm('¿Estás seguro de eliminar este curso?');" style="display:inline;">
+                                <form action="unidades/eliminar/<?= $u['id'] ?>" method="POST" onsubmit="return confirm('¿Estás seguro de eliminar este curso?');" style="display:inline;">
                                     <button type="submit" class="btn btn-outline-danger btn-sm w-100">
                                         <i class="fas fa-trash-alt me-2"></i>Eliminar
                                     </button>

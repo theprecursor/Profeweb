@@ -225,7 +225,7 @@ class UnidadesController extends Controller
             $this->redirect('unidades');
         }
 
-        $this->dashboardView('/unidades/edit', [
+        $this->dashboardView('unidades/edit', [
             'unidades' => $unidades,
             'cursos' => $cursos,
             'asignaturas' => $asignaturas,
