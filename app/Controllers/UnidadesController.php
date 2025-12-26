@@ -24,7 +24,7 @@ class UnidadesController extends Controller
             SELECT *
             FROM unidades_didacticas  
             WHERE usuario_id = ?
-            ORDER BY orden DESC
+            ORDER BY orden ASC
         ");
         $stmt->execute([$_SESSION['user_id']]);
         $unidades = $stmt->fetchAll();

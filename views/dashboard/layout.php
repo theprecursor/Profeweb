@@ -35,6 +35,12 @@
             <a class="nav-link <?= ($current_page ?? '') === 'dashboard' ? 'active' : '' ?>" href="/dashboard">
                 <i class="fas fa-tachometer-alt me-2"></i> Inicio
             </a>
+            <a class="nav-link <?= ($current_page ?? '') === 'perfil' ? 'active' : '' ?>" href="/dashboard/perfil">
+                <i class="fas fa-user-circle me-2"></i> Mi Perfil
+            </a>
+            <a class="nav-link <?= ($current_page ?? '') === 'cursos' ? 'active' : '' ?>" href="/cursos">
+                <i class="fas fa-book me-2"></i> Mis Cursos
+            </a>
             <a class="nav-link <?= ($current_page ?? '') === 'asignaturas' ? 'active' : '' ?>" href="/asignaturas">
                 <i class="fas fa-book me-2"></i> Mis Asignaturas
             </a>

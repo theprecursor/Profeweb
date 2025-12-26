@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Models;
+use PDO;
 
 // Asumimos que Database.php proporciona la conexión $db (instancia de PDO)
 
@@ -8,10 +9,18 @@ class Usuario
 {
     private $db;
 
-    // El modelo necesita la conexión a la base de datos (PDO) para operar.
-    public function __construct(\App\Core\Database $db)
+    // ELIMINA O COMENTA EL CONSTRUCTOR ANTERIOR QUE TENÍA \App\Core\Database
+    /* 
+    public function __construct(\App\Core\Database $db) {
+        $this->db = $db->getConnection(); 
+    }
+    */
+
+    // USA ESTE NUEVO CONSTRUCTOR:
+    public function __construct($db)
     {
-        $this->db = $db->getConnection(); // Asumimos que Database::getConnection() devuelve la instancia PDO
+        // Ahora aceptamos directamente la conexión (sea PDO o lo que venga del controlador)
+        $this->db = $db;
     }
 
     /**
@@ -22,8 +31,8 @@ class Usuario
     public function crearUsuario(array $datos_usuario): bool
     {
         // El RNF de seguridad exige sentencias preparadas PDO.
-        $sql = "INSERT INTO usuarios (email, password, nombre, apellidos, slug_perfil, biografia) 
-                VALUES (:email, :password, :nombre, :apellidos, :slug_perfil, :biografia)";
+        $sql = "INSERT INTO usuarios (email, password, nombre, slug_perfil, biografia) 
+                VALUES (:email, :password, :nombre, :slug_perfil, :biografia)";
 
         try {
             $stmt = $this->db->prepare($sql);
@@ -33,7 +42,6 @@ class Usuario
                 'email' => $datos_usuario['email'],
                 'password' => $datos_usuario['password'], // La contraseña ya debe venir HASHED desde el controlador
                 'nombre' => $datos_usuario['nombre'],
-                'apellidos' => $datos_usuario['apellidos'] ?? null,
                 'slug_perfil' => $datos_usuario['slug_perfil'],
                 'biografia' => $datos_usuario['biografia'] ?? null
             ]);
@@ -47,5 +55,66 @@ class Usuario
         }
     }
     
-    // Aquí irían otros métodos del CRUD, como buscarUsuarioPorEmail, etc.
+    // Método para actualizar el perfil
+    public function update($id, $data)
+    {
+        // Sentencia SQL con placeholders (:nombre) por seguridad
+        $sql = "UPDATE usuarios 
+                SET nombre = :nombre, 
+                    biografia = :biografia 
+                WHERE id = :id";
+
+        try {
+            $stmt = $this->db->prepare($sql);
+            
+            // Vinculamos los valores
+            $stmt->bindValue(':nombre', $data['nombre']);
+            $stmt->bindValue(':biografia', $data['biografia']);
+            $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+
+            return $stmt->execute();
+
+        } catch (\PDOException $e) {
+            // Es buena práctica registrar el error en logs internos
+            error_log("Error al actualizar perfil: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    // Método para obtener un usuario por ID (si no lo tienes ya)
+    public function find($id)
+    {
+        $stmt = $this->db->prepare("SELECT * FROM usuarios WHERE id = :id LIMIT 1");
+        $stmt->execute([':id' => $id]);
+        return $stmt->fetch();
+    }
+
+    public function updateEmail($id, $newEmail)
+    {
+        // Primero verificamos que el email no esté en uso por otro usuario
+        $stmt = $this->db->prepare("SELECT id FROM usuarios WHERE email = ? AND id != ?");
+        $stmt->execute([$newEmail, $id]);
+        if ($stmt->fetch()) {
+            return false; // El email ya existe
+        }
+
+        $stmt = $this->db->prepare("UPDATE usuarios SET email = ? WHERE id = ?");
+        return $stmt->execute([$newEmail, $id]);
+    }
+
+    // Actualizar solo la Contraseña
+    public function updatePassword($id, $newPasswordHash)
+    {
+        $stmt = $this->db->prepare("UPDATE usuarios SET password = ? WHERE id = ?");
+        return $stmt->execute([$newPasswordHash, $id]);
+    }
+
+    // Obtener la contraseña actual (hash) para verificar antes de cambiar
+    public function getPasswordById($id)
+    {
+        $stmt = $this->db->prepare("SELECT password FROM usuarios WHERE id = ?");
+        $stmt->execute([$id]);
+        $result = $stmt->fetch();
+        return $result ? $result['password'] : null;
+    }
 }

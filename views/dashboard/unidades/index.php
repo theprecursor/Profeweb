@@ -98,31 +98,45 @@
         <?php foreach ($unidades as $u): ?>
             <!-- CORRECCIÓN CLAVE: La condición debe verificar el curso_id de la UNIDAD individual ($u) -->
             <?php if ($u['curso_id'] === $c['id']): ?>
-            <div class="col-md-6 col-lg-4">
-                <div class="card h-100 shadow-sm">
-                    <div class="card-body">
+            <div class="col-12 col-md-6 col-xl-4">
+                <div class="card h-100 shadow-sm border-0 hover-card d-flex flex-column">
+                    <!-- Cuerpo -->
+                    <div class="card-body flex-grow-1">
                         <h4 class="card-title d-flex justify-content-between align-items-start">
                             Unidad <?= htmlspecialchars($u['orden']) ?>
                         </h4>
-                        <h5 class="card-title d-flex justify-content-between align-items-start">
+                        <h4 class="card-title text-primary fw-bold mb-2">
                             <?= htmlspecialchars($u['nombre_unidad']) ?>
-                            <?php if ($u['es_publico']): ?>
-                                <span class="badge bg-success">Pública</span>
-                            <?php else: ?>
-                                <span class="badge bg-secondary">Privada</span>
-                            <?php endif; ?>
-                        </h5>
-                        <?php if ($u['descripcion']): ?> 
-                            <p class="text-muted small"><?= nl2br(htmlspecialchars($u['descripcion'])) ?></p>
-                        <?php endif; ?>
+                        </h4>
                         
-                        <div class="mt-3">
-                            <a href="/unidades/editar/<?= $u['id'] ?>" class="btn btn-outline-primary btn-sm">Editar</a>
-                            <form method="POST" action="/unidades/eliminar/<?= $u['id'] ?>" class="d-inline">
-                                <button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('¿Eliminar esta unidad y todo su contenido?')">Eliminar</button>
-                            </form>
+                        <div class="mb-3">
+                            <span class="badge rounded-pill <?= $u['es_publico'] ? 'bg-info text-dark' : 'bg-secondary' ?>">
+                                <?= $u['es_publico'] ? 'Público' : 'Privado' ?>
+                            </span>
                         </div>
+
+                        <p class="card-text text-muted small">
+                            <?= !empty($u['descripcion']) 
+                                ? htmlspecialchars($u['descripcion'])
+                                : 'Sin descripción.' ?>
+                        </p>
                     </div>
+                    
+                    <div class="card-footer bg-transparent border-0 pb-3">
+                            <div class="d-grid gap-2">
+                                <!-- Botón Editar -->
+                                <a href="unidades/editar/<?= $curso['id'] ?>" class="btn btn-outline-primary btn-sm">
+                                    <i class="fas fa-edit me-2"></i>Editar
+                                </a>
+                                
+                                <!-- Botón Eliminar (Formulario para seguridad) -->
+                                <form action="unidades/eliminar/<?= $curso['id'] ?>" method="POST" onsubmit="return confirm('¿Estás seguro de eliminar este curso?');" style="display:inline;">
+                                    <button type="submit" class="btn btn-outline-danger btn-sm w-100">
+                                        <i class="fas fa-trash-alt me-2"></i>Eliminar
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
                 </div>
             </div>
             <?php endif; ?>

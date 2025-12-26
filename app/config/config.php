@@ -27,7 +27,7 @@ define('DB_PASS', '');
 
 // ROOT_URL: URL base de la aplicación (apuntando al DocumentRoot: /public). 
 // ¡Ajustar en el entorno de producción!
-define('ROOT_URL', 'http://localhost/profeweb');
+define('ROOT_URL', 'http://localhost/Profeweb');
 
 // Constante para el charset recomendado en la conexión PDO
 define('DB_CHARSET', 'utf8mb4');

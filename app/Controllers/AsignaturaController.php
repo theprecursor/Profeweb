@@ -14,26 +14,45 @@ class AsignaturaController extends Controller
         }
     }
 
-    // LISTADO
-    public function index()
-    {
+    public function index() {
         $this->requireAuth();
+        $userId = $_SESSION['user_id'];
+        
+        // 1. Obtener todos los cursos para el desplegable del filtro
+        $stmtCursos = $this->db->prepare("SELECT id, nombre_curso FROM cursos WHERE usuario_id = ? ORDER BY nombre_curso ASC");
+        $stmtCursos->execute([$userId]);
+        $cursos = $stmtCursos->fetchAll();
 
-        $stmt = $this->db->prepare("
-            SELECT id, nombre_asignatura, descripcion, es_publico
-            FROM asignaturas 
-            WHERE usuario_id = ? 
-            ORDER BY nombre_asignatura DESC
-        ");
-        $stmt->execute([$_SESSION['user_id']]);
+        // 2. Verificar si hay un filtro aplicado
+        $filtroCursoId = $_GET['curso_id'] ?? '';
+        
+        // 3. Preparar la consulta de Asignaturas (Dinámica)
+        $sql = "SELECT a.*, c.nombre_curso 
+                FROM asignaturas a 
+                LEFT JOIN cursos c ON a.curso_id = c.id 
+                WHERE a.usuario_id = ?";
+        
+        $params = [$userId];
+
+        if (!empty($filtroCursoId)) {
+            $sql .= " AND a.curso_id = ?";
+            $params[] = $filtroCursoId;
+        }
+        
+        $sql .= " ORDER BY a.nombre_asignatura ASC";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
         $asignaturas = $stmt->fetchAll();
 
+        // 4. Enviar todo a la vista
         $this->dashboardView('asignaturas/index', [
             'asignaturas' => $asignaturas,
+            'cursos' => $cursos,           // Necesario para el <select>
+            'filtro_curso' => $filtroCursoId, // Para recordar qué se seleccionó
             'current_page' => 'asignaturas'
         ]);
     }
-
     // FORMULARIO CREAR
     public function create()
     {
@@ -114,7 +133,6 @@ class AsignaturaController extends Controller
     // ACTUALIZAR
     public function update($id)
     {
-        printf('llegando aquí');
         $this->requireAuth();
         $id = (int)$id;
 

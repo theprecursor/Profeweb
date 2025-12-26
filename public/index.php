@@ -44,6 +44,21 @@ $router->add_route('GET', '/profesor/{id}', 'ProfesorController@show');
 // === DASHBOARD (privado) ===
 $router->add_route('GET', '/dashboard', 'DashboardController@index');
 
+// === PERFIL DEL PROFESOR ===
+$router->add_route('GET', '/dashboard/perfil', 'DashboardController@perfil'); // GET
+$router->add_route('POST', '/dashboard/perfil/update', 'DashboardController@updatePerfil'); // POST
+
+$router->add_route('POST', '/dashboard/perfil/cambiar-email', 'DashboardController@cambiarEmail');
+$router->add_route('POST', '/dashboard/perfil/cambiar-pass', 'DashboardController@cambiarPassword');
+
+// === cursos (solo profesor logueado) ===
+$router->add_route('GET',  '/cursos',          'CursoController@index');
+$router->add_route('GET',  '/curso/crear',     'CursoController@create');
+$router->add_route('POST', '/curso/crear',     'CursoController@store');
+$router->add_route('GET',  '/curso/editar/{id}', 'CursoController@edit');
+$router->add_route('POST', '/curso/editar/{id}', 'CursoController@update');
+$router->add_route('POST', '/curso/eliminar/{id}', 'CursoController@delete');
+
 // === ASIGNATURAS (solo profesor logueado) ===
 $router->add_route('GET',  '/asignaturas',          'AsignaturaController@index');
 $router->add_route('GET',  '/asignatura/crear',     'AsignaturaController@create');

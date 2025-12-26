@@ -1,31 +1,22 @@
-# Habilita el Motor de Reescritura
-RewriteEngine On
+<IfModule mod_rewrite.c>
+    # 1. Configuración básica y seguridad
+    Options -MultiViews
+    Options -Indexes
+    RewriteEngine On
 
-# ----------------------------------------------------
-# 1. Seguridad (Bloquear acceso a app/, config/, etc)
-# Esto previene el acceso a archivos de configuración o lógica 
-# si el DocumentRoot no estuviera configurado correctamente [11].
-# ----------------------------------------------------
+    # 2. Bloquear acceso al propio archivo .htaccess
+    <Files .htaccess>
+        Order Allow,Deny
+        Deny from all
+    </Files>
 
-# Bloquear el acceso a archivos de configuración .env, .ini, .yml, etc.
-RewriteRule ^(config|app|vendor|tests|storage)\/ - [F,L]
+    # 3. EXCEPCIONES CRÍTICAS (La magia para que se vean las fotos)
+    # Si la petición coincide con una carpeta real (!-d) o un archivo real (!-f),
+    # Apache servirá ese archivo directamente y NO ejecutará la línea de abajo.
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_FILENAME} !-f
 
-# Bloquear el acceso a archivos .htaccess dentro de subdirectorios
-<Files .htaccess>
-    Order Allow,Deny
-    Deny from all
-</Files>
-
-# ----------------------------------------------------
-# 2. Enrutamiento al Controlador Frontal (index.php)
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteRule ^ index.php [L]
-# ----------------------------------------------------
-
-# Verifica que la ruta no sea un directorio existente
-RewriteCond %{REQUEST_FILENAME} !-d
-# Verifica que la ruta no sea un archivo existente (ej. .css, .js, imágenes)
-RewriteCond %{REQUEST_FILENAME} !-f
-# Si no es ni archivo ni directorio, redirige la solicitud al index.php
-RewriteRule ^ index.php [L]
+    # 4. ENRUTAMIENTO (MVC)
+    # Todo lo que NO sea un archivo real, mándalo a index.php
+    RewriteRule ^ index.php [L]
+</IfModule>
