@@ -1,87 +1,116 @@
 <?php
-// ==========================================================
-// FORZAR MUESTRA DE ERRORES: QUITAR EN PRODUCCIÓN
-// ==========================================================
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1); 
-error_reporting(E_ALL); 
-/**
- * Controlador Frontal de ProfeWeb.
- * Punto de entrada único para todas las peticiones del framework MVC [33].
- */
+// public/index.php
+session_start();
 
-// ----------------------------------------------------------
-// 1. INICIALIZACIÓN DEL ENTORNO Y CARGA DE CONFIGURACIÓN
-// ----------------------------------------------------------
+// Cargar configuración
+require_once '../app/Config/config.php';
 
-// 1.1. Definir el separador de directorio para portabilidad (DS) [34]
-define('DS', DIRECTORY_SEPARATOR); 
-// 1.2. Definir la raíz del proyecto (un nivel arriba de public) [34]
-define('APP_ROOT', dirname(__DIR__)); 
+// Autoload PSR-4 simple
+spl_autoload_register(function ($class) {
+    $prefix = 'App\\';
+    $base_dir = __DIR__ . '/../app/';
+    if (strncmp($prefix, $class, strlen($prefix)) === 0) {
+        $file = $base_dir . str_replace('\\', '/', substr($class, strlen($prefix))) . '.php';
+        if (file_exists($file)) {
+            require_once $file;
+        }
+    }
+});
 
-// 1.3. Cargar el archivo de configuración (contiene ROOT_URL, DB_HOST, etc.) [34]
-require_once APP_ROOT . DS . 'config' . DS . 'config.php'; 
+use App\Core\Database;
+use App\Core\Router;
 
-// 1.4. Iniciar la Sesión [35]
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
+// Instancia única de base de datos
+$db = Database::getInstance()->getConnection();
+
+// Crear el router
+$router = new Router();
+
+// ==================== DEFINIR TUS RUTAS AQUÍ ====================
+
+// Ruta principal → HomeController@index
+$router->add_route('GET', '/', 'HomeController@index');
+
+// Rutas de autenticación
+$router->add_route('GET', '/login', 'AuthController@showLogin');
+$router->add_route('POST', '/login', 'AuthController@login');
+$router->add_route('GET', '/register', 'AuthController@showRegister');
+$router->add_route('POST', '/register', 'AuthController@register');
+$router->add_route('GET', '/logout', 'AuthController@logout');
+
+// === PÁGINA PÚBLICA ===
+$router->add_route('GET', '/profesor/{id}', 'ProfesorController@show');
+
+// === DASHBOARD (privado) ===
+$router->add_route('GET', '/dashboard', 'DashboardController@index');
+
+// === PERFIL DEL PROFESOR ===
+$router->add_route('GET', '/dashboard/perfil', 'DashboardController@perfil'); // GET
+$router->add_route('POST', '/dashboard/perfil/update', 'DashboardController@updatePerfil'); // POST
+
+$router->add_route('POST', '/dashboard/perfil/cambiar-email', 'DashboardController@cambiarEmail');
+$router->add_route('POST', '/dashboard/perfil/cambiar-pass', 'DashboardController@cambiarPassword');
+
+// === cursos (solo profesor logueado) ===
+$router->add_route('GET',  '/cursos',          'CursoController@index');
+$router->add_route('GET',  '/curso/crear',     'CursoController@create');
+$router->add_route('POST', '/curso/crear',     'CursoController@store');
+$router->add_route('GET',  '/curso/editar/{id}', 'CursoController@edit');
+$router->add_route('POST', '/curso/editar/{id}', 'CursoController@update');
+$router->add_route('POST', '/curso/eliminar/{id}', 'CursoController@delete');
+
+// === ASIGNATURAS (solo profesor logueado) ===
+$router->add_route('GET',  '/asignaturas',          'AsignaturaController@index');
+$router->add_route('GET',  '/asignatura/crear',     'AsignaturaController@create');
+$router->add_route('POST', '/asignatura/crear',     'AsignaturaController@store');
+$router->add_route('GET',  '/asignatura/editar/{id}', 'AsignaturaController@edit');
+$router->add_route('POST', '/asignatura/editar/{id}', 'AsignaturaController@update');
+$router->add_route('POST', '/asignatura/eliminar/{id}', 'AsignaturaController@delete');
+
+// === UNIDADES DIDÁCTICAS (solo profesor logueado) ===
+$router->add_route('GET',  '/unidades',          'UnidadesController@index');
+$router->add_route('POST', '/unidades',          'UnidadesController@indexfilter');
+$router->add_route('GET',  '/unidades/crear',     'UnidadesController@create');
+$router->add_route('POST', '/unidades/crear',     'UnidadesController@store');
+$router->add_route('GET',  '/unidades/editar/{id}', 'UnidadesController@edit');
+$router->add_route('POST', '/unidades/editar/{id}', 'UnidadesController@update');
+$router->add_route('POST', '/unidades/eliminar/{id}', 'UnidadesController@delete');
+
+// === ACTIVIDADES (solo profesor logueado) ===
+$router->add_route('GET',  '/actividades',          'ActividadesController@index');
+$router->add_route('POST', '/actividades',          'ActividadesController@indexfilter');
+$router->add_route('GET',  '/actividades/crear',     'ActividadesController@create');
+$router->add_route('POST', '/actividades/crear',     'ActividadesController@store');
+$router->add_route('GET',  '/actividades/editar/{id}', 'ActividadesController@edit');
+$router->add_route('POST', '/actividades/editar/{id}', 'ActividadesController@update');
+$router->add_route('POST', '/actividades/eliminar/{id}', 'ActividadesController@delete');
+
+// === CRITERIOS DE EVALUACIÓN (solo profesor logueado) ===
+$router->add_route('GET',  '/criterios',          'CriterioController@index');
+$router->add_route('GET',  '/criterios/crear',     'CriterioController@create');
+$router->add_route('POST', '/criterios/crear',     'CriterioController@store');
+$router->add_route('GET',  '/criterios/editar/{id}', 'CriterioController@edit');
+$router->add_route('POST', '/criterios/editar/{id}', 'CriterioController@update');
+$router->add_route('POST', '/criterios/eliminar/{id}', 'CriterioController@delete');
+
+// === COMPETENCIAS (solo profesor logueado) ===
+$router->add_route('GET',  '/competencias',          'CompetenciasController@index');
+$router->add_route('GET',  '/competencias/crear',     'CompetenciasController@create');
+$router->add_route('POST', '/competencias/crear',     'CompetenciasController@store');
+$router->add_route('GET',  '/competencias/editar/{id}', 'CompetenciasController@edit');
+$router->add_route('POST', '/competencias/editar/{id}', 'CompetenciasController@update');
+$router->add_route('POST', '/competencias/eliminar/{id}', 'CompetenciasController@delete');
+
+// ==============================================================
+
+// Obtener URL y método actual
+$request_url = $_SERVER['REQUEST_URI'] ?? '/';
+$request_method = $_SERVER['REQUEST_METHOD'];
+
+// Quitar parámetros de query string (?foo=bar)
+if (($pos = strpos($request_url, '?')) !== false) {
+    $request_url = substr($request_url, 0, $pos);
 }
 
-// ----------------------------------------------------------
-// 2. CARGA DE CLASES DEL CORE Y COMPONENTES DE LA APLICACIÓN
-// ----------------------------------------------------------
-
-// Clases del Core (Database debe usar el patrón Singleton [31, 32])
-require_once APP_ROOT . DS . 'app' . DS . 'Core' . DS . 'Database.php';
-require_once APP_ROOT . DS . 'app' . DS . 'Core' . DS . 'Router.php';
-
-// Modelos y Controladores
-require_once APP_ROOT . DS . 'app' . DS . 'Models' . DS . 'Usuario.php';
-require_once APP_ROOT . DS . 'app' . DS . 'Controllers' . DS . 'HomeController.php';
-require_once APP_ROOT . DS . 'app' . DS . 'Controllers' . DS . 'LoginController.php'; 
-// 🚨 Nuevo Controlador de Registro
-require_once APP_ROOT . DS . 'app' . DS . 'Controllers' . DS . 'RegisterController.php';
-
-// ----------------------------------------------------------
-// 3. Lógica de Despacho y Enrutamiento
-// ----------------------------------------------------------
-
-// 🚨 Obtener la instancia de la base de datos (PDO) usando el patrón Singleton
-$database = \App\Core\Database::getInstance();
-// Necesitamos pasar la instancia de Database, no el PDO, para que los controladores puedan llamar a getConnection()
-// y trabajar con la abstracción.
-
-// Obtener la URI y normalizar la ruta [38, 39]
-$uri = $_SERVER['REQUEST_URI'];
-$uri_no_query = strtok($uri, '?'); 
-$base_path = parse_url(ROOT_URL, PHP_URL_PATH);
-$base_path_clean = rtrim($base_path, '/');
-$path = str_ireplace($base_path, '', $uri_no_query);
-
-if ($path === $uri_no_query) {
-    $path = str_ireplace($base_path_clean, '', $uri_no_query);
-}
-
-$path = str_ireplace('index.php', '', $path);
-$path = str_ireplace('public', '', $path); 
-$path = trim($path, '/'); 
-
-// Normalizar a la raíz: si está vacío, debe ser '/' [39].
-if (empty($path)) {
-    $path = '/'; 
-}
-
-// Instanciar Router y Registrar Rutas
-$router = new App\Core\Router();
-
-// Rutas GET (Mostrar Vistas)
-$router->add_route('GET', '', 'HomeController@index'); 
-$router->add_route('GET', '/login', 'LoginController@showLogin'); 
-$router->add_route('GET', '/registro', 'RegisterController@showRegister'); // Mostrar formulario de registro
-
-// Rutas POST (Procesar Formularios/Lógica de Negocio)
-$router->add_route('POST', '/registro', 'RegisterController@storeRegister'); // Procesar envío de registro
-
-// 🚨 Despachar pasando la RUTA, el MÉTODO HTTP y la INSTANCIA DATABASE
-$router->dispatch($path, $_SERVER['REQUEST_METHOD'], $database); 
-?>
+// Despachar la ruta
+$router->dispatch($request_url, $request_method, Database::getInstance());
